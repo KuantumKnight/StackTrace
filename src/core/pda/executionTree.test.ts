@@ -56,7 +56,7 @@ describe('NPDA execution tree safety', () => {
       const results = runLanguageTests(
         anbnMachine,
         [...challenge.publicTests, ...challenge.hiddenTests],
-        'final-state',
+        challenge.acceptanceMode,
         40,
         1200,
       )
