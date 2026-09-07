@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CFGEditor } from './components/CFGEditor'
+import { DerivationExplorer } from './components/DerivationExplorer'
 import { ExecutionTrace } from './components/ExecutionTrace'
 import { ExecutionTree } from './components/ExecutionTree'
 import { InputTape } from './components/InputTape'
@@ -27,6 +28,7 @@ export default function App() {
   const [history, setHistory] = useState<Configuration[]>(() => [initialConfiguration(anbnMachine, 'aaabbb')])
   const [running, setRunning] = useState(false)
   const [speed, setSpeed] = useState(720)
+  const [view, setView] = useState<'workspace' | 'derivations'>('workspace')
 
   const activeIndex = history.length - 1
   const current = history[activeIndex]
@@ -86,14 +88,20 @@ export default function App() {
           <div><strong>StackTrace</strong><span>CFG + PDA visual debugger</span></div>
         </div>
         <nav aria-label="Workspace views">
-          <button className="active-tab">Workspace</button>
-          <button disabled title="Derivation explorer is the next implementation phase">Derivations <small>SOON</small></button>
-          <button onClick={() => document.getElementById('execution-tree')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>Execution Tree</button>
+          <button className={view === 'workspace' ? 'active-tab' : ''} onClick={() => setView('workspace')}>Workspace</button>
+          <button className={view === 'derivations' ? 'active-tab' : ''} onClick={() => setView('derivations')}>Derivations</button>
+          <button onClick={() => {
+            setView('workspace')
+            window.setTimeout(() => document.getElementById('execution-tree')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0)
+          }}>Execution Tree</button>
           <button disabled title="Challenge mode is planned after the core debugger">Challenges <small>SOON</small></button>
         </nav>
         <div className={`status-badge ${current.status}`}><span className="status-light" />{current.status.toUpperCase()}</div>
       </header>
 
+      {view === 'derivations' ? (
+        <DerivationExplorer grammarSource={grammar} target={input} onBack={() => setView('workspace')} />
+      ) : <>
       <section className="run-strip" aria-live="polite">
         <div className="run-state"><span className={`pulse ${running ? 'running' : ''}`} /><b>{running ? 'RUNNING' : 'DEBUG READY'}</b><span>{resultText}</span></div>
         <div className="run-metrics">
@@ -163,6 +171,7 @@ export default function App() {
           <ExecutionTrace machine={anbnMachine} history={history} activeIndex={activeIndex} onSelect={selectHistory} />
         </section>
       </section>
+      </>}
     </main>
   )
 }
