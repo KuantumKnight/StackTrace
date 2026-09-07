@@ -9,6 +9,7 @@ import { ExecutionTree } from './components/ExecutionTree'
 import { InputTape } from './components/InputTape'
 import { MachineView } from './components/MachineView'
 import { PDAEditor } from './components/PDAEditor'
+import { RejectionContext } from './components/RejectionContext'
 import { StackTimeline } from './components/StackTimeline'
 import { StackView } from './components/StackView'
 import { TestBench } from './components/TestBench'
@@ -81,6 +82,41 @@ export default function App() {
     const timer = window.setTimeout(step, speed)
     return () => window.clearTimeout(timer)
   }, [running, speed, current.id])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (view !== 'workspace') return
+      const target = event.target as HTMLElement | null
+      if (target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(target.tagName))) return
+
+      if (event.code === 'Space') {
+        event.preventDefault()
+        if (event.shiftKey) {
+          if (current.status === 'active') setRunning((value) => !value)
+        } else if (current.status === 'active') {
+          step()
+        }
+        return
+      }
+
+      if (event.altKey && event.key === 'ArrowLeft') {
+        event.preventDefault()
+        if (activeIndex > 0) {
+          setRunning(false)
+          setHistory((prev) => prev.slice(0, -1))
+        }
+        return
+      }
+
+      if (!event.ctrlKey && !event.metaKey && !event.altKey && event.key.toLowerCase() === 'r') {
+        event.preventDefault()
+        reset(input)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [view, current.id, current.status, activeIndex, input, acceptanceMode, machine, history.length])
 
   const selectHistory = (index: number) => {
     setRunning(false)
@@ -235,7 +271,7 @@ export default function App() {
 
       <section className="bottom-grid">
         <section className="panel debugger-panel">
-          <div className="panel-heading"><div><span>DEBUG INPUT</span><span className="heading-separator">/</span><span>PLAYBACK</span></div><span>TIME-TRAVEL ENABLED</span></div>
+          <div className="panel-heading"><div><span>DEBUG INPUT</span><span className="heading-separator">/</span><span>PLAYBACK</span></div><span>SPACE STEP · ⇧SPACE RUN</span></div>
           <InputTape input={current.input} inputIndex={current.inputIndex} />
 
           <div className="debug-input-row">
@@ -259,7 +295,7 @@ export default function App() {
             <button className={acceptanceMode === 'empty-stack' ? 'selected' : ''} onClick={() => updateMode('empty-stack')}>Empty stack</button>
           </div>
 
-          {current.status === 'dead' && <div className="rejection"><div className="rejection-icon">×</div><div><strong>BRANCH TERMINATED</strong><span>{current.reason}</span><small>Inspect C{Math.max(0, activeIndex - 1)} to see the last valid configuration.</small></div></div>}
+          {current.status === 'dead' && <div className="rejection"><div className="rejection-icon">×</div><div><strong>BRANCH TERMINATED</strong><span>{current.reason}</span><small>Inspect C{Math.max(0, activeIndex - 1)} to see the last valid configuration.</small><RejectionContext machine={machine} config={current} /></div></div>}
           {current.status === 'accepted' && <div className="acceptance"><div className="acceptance-icon">✓</div><div><strong>STRING ACCEPTED</strong><span>The selected acceptance condition is satisfied with all input consumed.</span></div></div>}
         </section>
 
