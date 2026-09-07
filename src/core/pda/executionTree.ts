@@ -24,6 +24,7 @@ export function buildExecutionTree(
   mode: AcceptanceMode,
   maxDepth = 10,
   maxNodes = 90,
+  maxStackDepth = 64,
 ): ExecutionTreeResult {
   const rootConfig = initialConfiguration(machine, input, mode)
   const root: ExecutionTreeNode = {
@@ -68,6 +69,15 @@ export function buildExecutionTree(
         parentId: node.id,
       }
 
+      if (config.stack.length > maxStackDepth) {
+        config = {
+          ...config,
+          status: 'limit',
+          reason: `Stack depth limit ${maxStackDepth} reached.`,
+        }
+        truncated = true
+      }
+
       const key = configurationKey(config)
       if (config.status === 'active' && visited.has(key)) {
         config = {
@@ -75,6 +85,7 @@ export function buildExecutionTree(
           status: 'limit',
           reason: 'Repeated configuration stopped to prevent an infinite ε-loop.',
         }
+        truncated = true
       } else if (config.status === 'active') {
         visited.add(key)
       }
