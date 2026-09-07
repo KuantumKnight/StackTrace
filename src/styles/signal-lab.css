@@ -253,6 +253,72 @@ nav .active-tab:hover:not(:disabled) { color: #fff; background: var(--ink); }
 
 .skip-link { border-color: var(--violet); border-radius: 10px; color: #fff; background: var(--ink); }
 
+/* Feature CSS predates the studio palette and uses stronger selectors; keep
+   the content readable when those views render on the new light surfaces. */
+.learn-workspace .tutorial-card header > span { color: var(--violet) !important; border-color: #c8c0f2; background: var(--violet-soft); }
+.learn-workspace .tutorial-card header small,
+.examples-workspace .examples-toolbar small,
+.challenge-workspace .challenge-toolbar small,
+.testbench-workspace .testbench-title small { color: var(--violet) !important; }
+.learn-workspace .tutorial-card header strong,
+.learn-workspace .memory-card header strong,
+.examples-workspace .example-card-head strong,
+.examples-workspace .saved-row strong,
+.challenge-workspace .challenge-list button b,
+.challenge-workspace .challenge-copy p,
+.testbench-workspace .testbench-title strong { color: var(--ink) !important; }
+.learn-workspace .tutorial-card p,
+.learn-workspace .tutorial-card ol,
+.learn-workspace .memory-card p,
+.learn-workspace .memory-card small,
+.learn-workspace .formal-note span,
+.examples-workspace .example-card p,
+.examples-workspace .saved-row small,
+.challenge-workspace .challenge-list button small,
+.challenge-workspace .challenge-copy small,
+.testbench-workspace .assertion-help { color: var(--muted) !important; }
+.learn-workspace .lab-controls,
+.learn-workspace .memory-verdict,
+.examples-workspace .saved-row,
+.challenge-workspace .challenge-result-list > div { border-color: var(--line); }
+.learn-workspace .lab-controls label span,
+.learn-workspace .lab-controls label b,
+.learn-workspace .memory-card header small,
+.learn-workspace .memory-verdict > span,
+.learn-workspace .memory-verdict small { color: var(--muted) !important; }
+.learn-workspace .lab-controls > code { border-color: #c8c0f2; color: var(--violet); background: var(--violet-soft); }
+.learn-workspace .finite-meter span,
+.learn-workspace .stack-height-strip { border-color: var(--line-strong); background: var(--surface-soft); }
+.learn-workspace .finite-meter span.filled { border-color: #b7e4de; color: var(--cyan); background: var(--cyan-soft); }
+.learn-workspace .stack-height-strip span { border-color: #99d8cf; background: linear-gradient(180deg, rgba(26,167,161,.72), rgba(26,167,161,.28)); }
+.examples-workspace .example-card-head small,
+.examples-workspace .example-card-head > span,
+.examples-workspace .example-samples small,
+.examples-workspace .saved-row > span { color: var(--muted) !important; }
+.examples-workspace .example-card pre,
+.examples-workspace .example-samples code { border-color: var(--line); color: var(--violet); background: var(--surface-soft); }
+.examples-workspace .save-workspace-row label span { color: var(--muted); }
+.examples-workspace .save-workspace-row input { border-color: var(--line-strong); color: var(--ink); background: #fff; }
+.challenge-workspace .challenge-list > button { border-bottom-color: var(--line); background: var(--surface); }
+.challenge-workspace .challenge-list > button:hover,
+.challenge-workspace .challenge-list > button.selected { background: var(--violet-soft); }
+.challenge-workspace .challenge-list button b em { border-color: #c8c0f2; color: var(--violet); background: var(--violet-soft); }
+.challenge-workspace .challenge-list button i { border-color: var(--line-strong); color: var(--muted); }
+.challenge-workspace .challenge-mode-note { border-color: #ecd7a9; background: var(--amber-soft); }
+.challenge-workspace .challenge-mode-note small,
+.challenge-workspace .challenge-mode-note strong,
+.challenge-workspace .challenge-mode-note span { color: var(--amber) !important; }
+.challenge-workspace .challenge-result-list > div { background: var(--surface); }
+.challenge-workspace .challenge-result-list b { color: var(--ink) !important; }
+.challenge-workspace .challenge-result-list span,
+.challenge-workspace .challenge-result-list small { color: var(--muted); }
+.testbench-workspace .test-result,
+.testbench-workspace .test-results-head { border-color: var(--line); background: var(--surface); }
+.testbench-workspace .test-results-head { color: var(--muted); }
+.testbench-workspace .test-result > span,
+.testbench-workspace .test-result code { color: var(--ink-soft); }
+.testbench-workspace .assertion-editor-panel textarea { color: var(--ink); background: #fbfaf6; }
+
 @keyframes signalPulse { 70% { box-shadow: 0 0 0 7px rgba(102,225,207,0); } 100% { box-shadow: 0 0 0 0 rgba(102,225,207,0); } }
 
 @media (max-width: 1180px) {
