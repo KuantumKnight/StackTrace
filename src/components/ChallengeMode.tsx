@@ -59,15 +59,15 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
     <section className="challenge-workspace">
       <div className="challenge-toolbar">
         <button onClick={onBack}>← Workspace</button>
-        <div><small>REPAIR LAB</small><strong>Debug the machine, then prove the repair.</strong></div>
+        <div><small>REPAIR LAB · LEVELS 1–7</small><strong>Debug the machine, then prove the repair.</strong></div>
       </div>
 
       <div className="challenge-layout">
         <aside className="panel challenge-list">
-          <div className="panel-heading"><span>CHALLENGES</span><span>{challenges.length} LABS</span></div>
+          <div className="panel-heading"><span>CHALLENGES</span><span>{challenges.length} LEVELS</span></div>
           {challenges.map((challenge) => (
             <button key={challenge.id} className={challenge.id === selected.id ? 'selected' : ''} onClick={() => selectChallenge(challenge.id)}>
-              <span><b>{challenge.title}</b><small>{challenge.concept}</small></span>
+              <span><b><em>L{challenge.level}</em>{challenge.title}</b><small>{challenge.concept}</small></span>
               <i>{challenge.id === activeChallengeId ? 'ACTIVE' : challenge.difficulty}</i>
             </button>
           ))}
@@ -75,8 +75,8 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
 
         <div className="challenge-main">
           <section className="panel challenge-briefing">
-            <div className="panel-heading"><div><span>{selected.title.toUpperCase()}</span><span className="heading-separator">/</span><span>{selected.difficulty.toUpperCase()}</span></div><span>{isActive ? 'ACTIVE' : 'NOT STARTED'}</span></div>
-            <div className="challenge-copy"><small>MISSION</small><p>{selected.briefing}</p></div>
+            <div className="panel-heading"><div><span>LEVEL {selected.level}</span><span className="heading-separator">/</span><span>{selected.title.toUpperCase()}</span><span className="heading-separator">/</span><span>{selected.difficulty.toUpperCase()}</span></div><span>{isActive ? 'ACTIVE' : 'NOT STARTED'}</span></div>
+            <div className="challenge-copy"><small>MISSION · {selected.concept.toUpperCase()}</small><p>{selected.briefing}</p></div>
             <div className="challenge-mode-note">
               <small>VALIDATION CONVENTION</small>
               <strong>{challengeMode === 'final-state' ? 'Final state' : 'Empty stack'}</strong>
@@ -115,7 +115,7 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
                 </div>
               ))}
             </div>
-            {solved && <div className="challenge-solved"><span>✓</span><div><strong>Repair verified · {score}/100.</strong><small>All public and hidden assertions pass using {challengeMode === 'final-state' ? 'final-state' : 'empty-stack'} acceptance.</small></div></div>}
+            {solved && <div className="challenge-solved"><span>✓</span><div><strong>Level {selected.level} repair verified · {score}/100.</strong><small>All public and hidden assertions pass using {challengeMode === 'final-state' ? 'final-state' : 'empty-stack'} acceptance.</small></div></div>}
           </section>
         </div>
       </div>
