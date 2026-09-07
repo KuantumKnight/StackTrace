@@ -1,0 +1,41 @@
+name: StackTrace Live Smoke
+
+on:
+  workflow_run:
+    workflows: ["Publish StackTrace Static Release"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify GitHub Pages and Vercel
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          check_site() {
+            local name="$1"
+            local url="$2"
+
+            for attempt in {1..18}; do
+              echo "[$name] attempt $attempt: $url"
+              if body="$(curl -fsSL --max-time 15 "$url")" && grep -Fq 'StackTrace — CFG & PDA Debugger' <<< "$body"; then
+                echo "[$name] OK"
+                return 0
+              fi
+              sleep 5
+            done
+
+            echo "[$name] failed smoke verification"
+            return 1
+          }
+
+          check_site "GitHub Pages" "https://kuantumknight.github.io/StackTrace/"
+          check_site "Vercel" "https://stacktrace-ashen.vercel.app/"
