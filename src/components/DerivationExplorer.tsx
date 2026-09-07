@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { deriveTarget, type DerivationMode } from '../core/cfg/derivation'
 import { parseGrammar } from '../core/cfg/grammarParser'
 import { buildParseTree } from '../core/cfg/parseTree'
+import '../styles/derivation.css'
 import { ParseTree } from './ParseTree'
 
 interface DerivationExplorerProps {
