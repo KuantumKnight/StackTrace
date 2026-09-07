@@ -21,6 +21,8 @@ jobs:
           cache-dependency-path: package.json
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Unit and regression tests
+        run: npm test
       - name: Typecheck and production build
         run: npm run build
       - name: Upload production build
