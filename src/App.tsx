@@ -4,16 +4,30 @@ import { CFGEditor } from './components/CFGEditor'
 import { ChallengeMode } from './components/ChallengeMode'
 import { ConversionExplorer } from './components/ConversionExplorer'
 import { DerivationExplorer } from './components/DerivationExplorer'
+import { ExampleLibrary } from './components/ExampleLibrary'
 import { ExecutionTrace } from './components/ExecutionTrace'
 import { ExecutionTree } from './components/ExecutionTree'
 import { InputTape } from './components/InputTape'
+import { LearnCenter } from './components/LearnCenter'
 import { MachineView } from './components/MachineView'
 import { PDAEditor } from './components/PDAEditor'
 import { RejectionContext } from './components/RejectionContext'
+import { RejectionSummary } from './components/RejectionSummary'
 import { StackTimeline } from './components/StackTimeline'
 import { StackView } from './components/StackView'
 import { TestBench } from './components/TestBench'
 import { WorkspaceShare } from './components/WorkspaceShare'
+import {
+  appendHistoryEntry,
+  canMoveBack,
+  canMoveForward,
+  createDebuggerHistory,
+  historyCurrent,
+  moveHistoryBack,
+  moveHistoryForward,
+  replaceHistoryPath,
+  selectHistoryEntry,
+} from './core/debugger/history'
 import { describeTransition, initialConfiguration, matchingTransitions, nextConfigurations } from './core/pda/simulator'
 import type { AcceptanceMode, Configuration, PDA } from './core/pda/types'
 import { loadWorkspace, readWorkspaceFromUrl, saveWorkspace, type WorkspaceSnapshot } from './core/workspace/persistence'
@@ -29,23 +43,28 @@ const speedOptions = [
   { label: '2×', ms: 260 },
 ]
 
-type AppView = 'workspace' | 'derivations' | 'analysis' | 'conversion' | 'designer' | 'tests' | 'challenges' | 'share'
+type AppView = 'workspace' | 'derivations' | 'analysis' | 'conversion' | 'designer' | 'tests' | 'challenges' | 'examples' | 'learn' | 'share'
+type LearnTarget = 'derivations' | 'analysis' | 'conversion' | 'designer' | 'tests' | 'challenges' | 'examples'
 
 export default function App() {
   const [boot] = useState(() => readWorkspaceFromUrl() ?? loadWorkspace())
+  const bootMachine = boot?.machine ?? anbnMachine
+  const bootInput = boot?.input ?? 'aaabbb'
+  const bootMode = boot?.acceptanceMode ?? 'final-state'
   const [grammar, setGrammar] = useState(boot?.grammar ?? defaultGrammar)
-  const [input, setInput] = useState(boot?.input ?? 'aaabbb')
-  const [acceptanceMode, setAcceptanceMode] = useState<AcceptanceMode>(boot?.acceptanceMode ?? 'final-state')
-  const [machine, setMachine] = useState<PDA>(boot?.machine ?? anbnMachine)
-  const [history, setHistory] = useState<Configuration[]>(() => [initialConfiguration(boot?.machine ?? anbnMachine, boot?.input ?? 'aaabbb', boot?.acceptanceMode ?? 'final-state')])
+  const [input, setInput] = useState(bootInput)
+  const [acceptanceMode, setAcceptanceMode] = useState<AcceptanceMode>(bootMode)
+  const [machine, setMachine] = useState<PDA>(bootMachine)
+  const [debugHistory, setDebugHistory] = useState(() => createDebuggerHistory(initialConfiguration(bootMachine, bootInput, bootMode)))
   const [running, setRunning] = useState(false)
   const [speed, setSpeed] = useState(720)
   const [view, setView] = useState<AppView>('workspace')
   const [designerReturnView, setDesignerReturnView] = useState<AppView>('workspace')
   const [activeChallengeId, setActiveChallengeId] = useState<string | null>(boot?.activeChallengeId ?? null)
 
-  const activeIndex = history.length - 1
-  const current = history[activeIndex]
+  const history = debugHistory.entries
+  const activeIndex = debugHistory.cursor
+  const current = historyCurrent(debugHistory)
   const previous = history[Math.max(0, activeIndex - 1)]
   const unread = current.input.slice(current.inputIndex) || 'ε'
   const transition = useMemo(
@@ -57,16 +76,30 @@ export default function App() {
 
   const reset = (nextInput = input, mode = acceptanceMode, nextMachine = machine) => {
     setRunning(false)
-    setHistory([initialConfiguration(nextMachine, nextInput, mode)])
+    setDebugHistory(createDebuggerHistory(initialConfiguration(nextMachine, nextInput, mode)))
   }
 
   const step = () => {
+    if (canMoveForward(debugHistory)) {
+      setDebugHistory((previousHistory) => moveHistoryForward(previousHistory))
+      return
+    }
     if (current.status !== 'active') {
       setRunning(false)
       return
     }
     const next = nextConfigurations(machine, current, acceptanceMode, history.length - 1)
-    setHistory((prev) => [...prev, next[0]])
+    setDebugHistory((previousHistory) => appendHistoryEntry(previousHistory, next[0]))
+  }
+
+  const moveBack = () => {
+    setRunning(false)
+    setDebugHistory((previousHistory) => moveHistoryBack(previousHistory))
+  }
+
+  const moveForward = () => {
+    setRunning(false)
+    setDebugHistory((previousHistory) => moveHistoryForward(previousHistory))
   }
 
   useEffect(() => {
@@ -75,13 +108,13 @@ export default function App() {
 
   useEffect(() => {
     if (!running) return
-    if (current.status !== 'active') {
+    if (current.status !== 'active' && !canMoveForward(debugHistory)) {
       setRunning(false)
       return
     }
     const timer = window.setTimeout(step, speed)
     return () => window.clearTimeout(timer)
-  }, [running, speed, current.id])
+  }, [running, speed, current.id, debugHistory.cursor, debugHistory.entries.length])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -92,8 +125,8 @@ export default function App() {
       if (event.code === 'Space') {
         event.preventDefault()
         if (event.shiftKey) {
-          if (current.status === 'active') setRunning((value) => !value)
-        } else if (current.status === 'active') {
+          if (current.status === 'active' || canMoveForward(debugHistory)) setRunning((value) => !value)
+        } else {
           step()
         }
         return
@@ -101,10 +134,13 @@ export default function App() {
 
       if (event.altKey && event.key === 'ArrowLeft') {
         event.preventDefault()
-        if (activeIndex > 0) {
-          setRunning(false)
-          setHistory((prev) => prev.slice(0, -1))
-        }
+        if (canMoveBack(debugHistory)) moveBack()
+        return
+      }
+
+      if (event.altKey && event.key === 'ArrowRight') {
+        event.preventDefault()
+        if (canMoveForward(debugHistory)) moveForward()
         return
       }
 
@@ -116,17 +152,17 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [view, current.id, current.status, activeIndex, input, acceptanceMode, machine, history.length])
+  }, [view, current.id, current.status, debugHistory, input, acceptanceMode, machine])
 
   const selectHistory = (index: number) => {
     setRunning(false)
-    setHistory((prev) => prev.slice(0, index + 1))
+    setDebugHistory((previousHistory) => selectHistoryEntry(previousHistory, index))
   }
 
   const loadBranchPath = (path: Configuration[]) => {
     if (!path.length) return
     setRunning(false)
-    setHistory(path)
+    setDebugHistory(replaceHistoryPath(path))
   }
 
   const updateMode = (mode: AcceptanceMode) => {
@@ -152,8 +188,7 @@ export default function App() {
 
   const debugInput = (nextInput: string) => {
     setInput(nextInput)
-    setRunning(false)
-    setHistory([initialConfiguration(machine, nextInput, acceptanceMode)])
+    reset(nextInput)
     setView('workspace')
   }
 
@@ -179,40 +214,62 @@ export default function App() {
     setMachine(snapshot.machine)
     setActiveChallengeId(snapshot.activeChallengeId ?? null)
     setRunning(false)
-    setHistory([initialConfiguration(snapshot.machine, snapshot.input, snapshot.acceptanceMode)])
+    setDebugHistory(createDebuggerHistory(initialConfiguration(snapshot.machine, snapshot.input, snapshot.acceptanceMode)))
     setView('workspace')
+  }
+
+  const openAnbnExperiment = (nextInput: string) => {
+    setGrammar(defaultGrammar)
+    setInput(nextInput)
+    setAcceptanceMode('final-state')
+    setMachine(anbnMachine)
+    setActiveChallengeId(null)
+    setRunning(false)
+    setDebugHistory(createDebuggerHistory(initialConfiguration(anbnMachine, nextInput, 'final-state')))
+    setView('workspace')
+  }
+
+  const navigateFromLearn = (target: LearnTarget) => {
+    if (target === 'designer') openDesigner('learn')
+    else setView(target)
   }
 
   const resultText = current.status === 'accepted'
     ? 'Input accepted by the current PDA.'
     : current.status === 'dead'
       ? current.reason || 'This computation branch terminated.'
-      : `${availableTransitions.length} transition${availableTransitions.length === 1 ? '' : 's'} currently enabled.`
+      : current.status === 'limit'
+        ? current.reason || 'Execution safety limit reached.'
+        : `${availableTransitions.length} transition${availableTransitions.length === 1 ? '' : 's'} currently enabled.`
 
   return (
     <main className="app-shell">
+      <a className="skip-link" href="#stacktrace-content">Skip to StackTrace content</a>
       <header className="topbar">
         <div className="brand-block">
           <div className="brand-mark" aria-hidden="true"><span /></div>
           <div><strong>StackTrace</strong><span>CFG + PDA visual debugger</span></div>
         </div>
         <nav aria-label="Workspace views">
-          <button className={view === 'workspace' ? 'active-tab' : ''} onClick={() => setView('workspace')}>Workspace</button>
-          <button className={view === 'derivations' ? 'active-tab' : ''} onClick={() => setView('derivations')}>Derive</button>
-          <button className={view === 'analysis' ? 'active-tab' : ''} onClick={() => setView('analysis')}>Analyze</button>
-          <button className={view === 'conversion' ? 'active-tab' : ''} onClick={() => setView('conversion')}>CFG → PDA</button>
-          <button className={view === 'designer' ? 'active-tab' : ''} onClick={() => openDesigner('workspace')}>Designer</button>
+          <button aria-pressed={view === 'workspace'} className={view === 'workspace' ? 'active-tab' : ''} onClick={() => setView('workspace')}>Workspace</button>
+          <button aria-pressed={view === 'derivations'} className={view === 'derivations' ? 'active-tab' : ''} onClick={() => setView('derivations')}>Derive</button>
+          <button aria-pressed={view === 'analysis'} className={view === 'analysis' ? 'active-tab' : ''} onClick={() => setView('analysis')}>Analyze</button>
+          <button aria-pressed={view === 'conversion'} className={view === 'conversion' ? 'active-tab' : ''} onClick={() => setView('conversion')}>CFG → PDA</button>
+          <button aria-pressed={view === 'designer'} className={view === 'designer' ? 'active-tab' : ''} onClick={() => openDesigner('workspace')}>Designer</button>
           <button onClick={() => {
             setView('workspace')
             window.setTimeout(() => document.getElementById('execution-tree')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0)
           }}>Tree</button>
-          <button className={view === 'tests' ? 'active-tab' : ''} onClick={() => setView('tests')}>Tests</button>
-          <button className={view === 'challenges' ? 'active-tab' : ''} onClick={() => setView('challenges')}>Challenges</button>
-          <button className={view === 'share' ? 'active-tab' : ''} onClick={() => setView('share')}>Share</button>
+          <button aria-pressed={view === 'tests'} className={view === 'tests' ? 'active-tab' : ''} onClick={() => setView('tests')}>Tests</button>
+          <button aria-pressed={view === 'challenges'} className={view === 'challenges' ? 'active-tab' : ''} onClick={() => setView('challenges')}>Challenges</button>
+          <button aria-pressed={view === 'examples'} className={view === 'examples' ? 'active-tab' : ''} onClick={() => setView('examples')}>Examples</button>
+          <button aria-pressed={view === 'learn'} className={view === 'learn' ? 'active-tab' : ''} onClick={() => setView('learn')}>Learn</button>
+          <button aria-pressed={view === 'share'} className={view === 'share' ? 'active-tab' : ''} onClick={() => setView('share')}>Share</button>
         </nav>
         <div className={`status-badge ${current.status}`}><span className="status-light" />{current.status.toUpperCase()}</div>
       </header>
 
+      <div id="stacktrace-content">
       {view === 'derivations' ? (
         <DerivationExplorer grammarSource={grammar} target={input} onBack={() => setView('workspace')} />
       ) : view === 'analysis' ? (
@@ -233,13 +290,17 @@ export default function App() {
           onOpenDesigner={() => openDesigner('challenges')}
           onBack={() => setView('workspace')}
         />
+      ) : view === 'examples' ? (
+        <ExampleLibrary workspace={workspaceSnapshot} onLoad={importWorkspace} onBack={() => setView('workspace')} />
+      ) : view === 'learn' ? (
+        <LearnCenter onBack={() => setView('workspace')} onOpenDebugger={openAnbnExperiment} onNavigate={navigateFromLearn} />
       ) : view === 'share' ? (
         <WorkspaceShare workspace={workspaceSnapshot} onImport={importWorkspace} onBack={() => setView('workspace')} />
       ) : <>
       <section className="run-strip" aria-live="polite">
         <div className="run-state"><span className={`pulse ${running ? 'running' : ''}`} /><b>{running ? 'RUNNING' : 'DEBUG READY'}</b><span>{resultText}</span></div>
         <div className="run-metrics">
-          <span><small>STEP</small><b>{activeIndex}</b></span>
+          <span><small>STEP</small><b>{activeIndex}/{history.length - 1}</b></span>
           <span><small>STATE</small><b>{current.state}</b></span>
           <span><small>UNREAD</small><b>{unread}</b></span>
           <span><small>STACK</small><b>{current.stack.length}</b></span>
@@ -271,7 +332,7 @@ export default function App() {
 
       <section className="bottom-grid">
         <section className="panel debugger-panel">
-          <div className="panel-heading"><div><span>DEBUG INPUT</span><span className="heading-separator">/</span><span>PLAYBACK</span></div><span>SPACE STEP · ⇧SPACE RUN</span></div>
+          <div className="panel-heading"><div><span>DEBUG INPUT</span><span className="heading-separator">/</span><span>PLAYBACK</span></div><span>SPACE STEP · ⇧SPACE RUN · ALT+←/→ TIME TRAVEL</span></div>
           <InputTape input={current.input} inputIndex={current.inputIndex} />
 
           <div className="debug-input-row">
@@ -281,9 +342,10 @@ export default function App() {
 
           <div className="playback-row">
             <div className="controls">
-              <button disabled={history.length <= 1} onClick={() => selectHistory(activeIndex - 1)} title="Previous configuration">← Back</button>
-              <button className="primary-control" onClick={step} disabled={current.status !== 'active'}>Step →</button>
-              <button className={running ? 'pause-control' : ''} onClick={() => setRunning((value) => !value)} disabled={current.status !== 'active'}>{running ? 'Pause' : '▶ Run'}</button>
+              <button disabled={!canMoveBack(debugHistory)} onClick={moveBack} title="Previous saved configuration">← Back</button>
+              <button disabled={!canMoveForward(debugHistory)} onClick={moveForward} title="Next saved configuration">Forward →</button>
+              <button className="primary-control" onClick={step} disabled={current.status !== 'active' && !canMoveForward(debugHistory)}>Step →</button>
+              <button className={running ? 'pause-control' : ''} onClick={() => setRunning((value) => !value)} disabled={current.status !== 'active' && !canMoveForward(debugHistory)}>{running ? 'Pause' : '▶ Run'}</button>
               <button onClick={() => reset(input)}>↻ Reset</button>
             </div>
             <label className="speed-control">Speed<select value={speed} onChange={(event) => setSpeed(Number(event.target.value))}>{speedOptions.map((option) => <option key={option.ms} value={option.ms}>{option.label}</option>)}</select></label>
@@ -291,11 +353,12 @@ export default function App() {
 
           <div className="acceptance-control" role="group" aria-label="PDA acceptance mode">
             <span>ACCEPT BY</span>
-            <button className={acceptanceMode === 'final-state' ? 'selected' : ''} onClick={() => updateMode('final-state')}>Final state</button>
-            <button className={acceptanceMode === 'empty-stack' ? 'selected' : ''} onClick={() => updateMode('empty-stack')}>Empty stack</button>
+            <button aria-pressed={acceptanceMode === 'final-state'} className={acceptanceMode === 'final-state' ? 'selected' : ''} onClick={() => updateMode('final-state')}>Final state</button>
+            <button aria-pressed={acceptanceMode === 'empty-stack'} className={acceptanceMode === 'empty-stack' ? 'selected' : ''} onClick={() => updateMode('empty-stack')}>Empty stack</button>
           </div>
 
-          {current.status === 'dead' && <div className="rejection"><div className="rejection-icon">×</div><div><strong>BRANCH TERMINATED</strong><span>{current.reason}</span><small>Inspect C{Math.max(0, activeIndex - 1)} to see the last valid configuration.</small><RejectionContext machine={machine} config={current} /></div></div>}
+          {current.status === 'dead' && <div className="rejection"><div className="rejection-icon">×</div><div><strong>BRANCH TERMINATED</strong><span>{current.reason}</span><small>Use Back to inspect C{Math.max(0, activeIndex - 1)} without deleting later history.</small><RejectionContext machine={machine} config={current} /><RejectionSummary machine={machine} input={current.input} mode={acceptanceMode} /></div></div>}
+          {current.status === 'limit' && <div className="execution-limit"><div className="limit-icon">!</div><div><strong>EXECUTION LIMIT</strong><span>{current.reason || 'A safety limit stopped this branch.'}</span><RejectionSummary machine={machine} input={current.input} mode={acceptanceMode} /></div></div>}
           {current.status === 'accepted' && <div className="acceptance"><div className="acceptance-icon">✓</div><div><strong>STRING ACCEPTED</strong><span>The selected acceptance condition is satisfied with all input consumed.</span></div></div>}
         </section>
 
@@ -306,6 +369,7 @@ export default function App() {
         </section>
       </section>
       </>}
+      </div>
     </main>
   )
 }
