@@ -19,8 +19,9 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
   const [showHint, setShowHint] = useState(false)
   const selected = challenges.find((challenge) => challenge.id === selectedId) || challenges[0]
   const isActive = activeChallengeId === selected.id
-  const publicResults = useMemo(() => runLanguageTests(machine, selected.publicTests, mode), [machine, selected, mode])
-  const hiddenResults = useMemo(() => runLanguageTests(machine, selected.hiddenTests, mode), [machine, selected, mode])
+  const challengeMode = selected.acceptanceMode
+  const publicResults = useMemo(() => runLanguageTests(machine, selected.publicTests, challengeMode), [machine, selected, challengeMode])
+  const hiddenResults = useMemo(() => runLanguageTests(machine, selected.hiddenTests, challengeMode), [machine, selected, challengeMode])
   const publicPassed = publicResults.every((result) => result.passed)
   const hiddenPassed = hiddenResults.every((result) => result.passed)
   const solved = isActive && publicPassed && hiddenPassed
@@ -57,6 +58,11 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
           <section className="panel challenge-briefing">
             <div className="panel-heading"><div><span>{selected.title.toUpperCase()}</span><span className="heading-separator">/</span><span>{selected.difficulty.toUpperCase()}</span></div><span>{isActive ? 'ACTIVE' : 'NOT STARTED'}</span></div>
             <div className="challenge-copy"><small>MISSION</small><p>{selected.briefing}</p></div>
+            <div className="challenge-mode-note">
+              <small>VALIDATION CONVENTION</small>
+              <strong>{challengeMode === 'final-state' ? 'Final state' : 'Empty stack'}</strong>
+              {mode !== challengeMode && <span>Main debugger is currently set to {mode === 'final-state' ? 'final state' : 'empty stack'}; challenge scoring still uses the required convention.</span>}
+            </div>
             <div className="challenge-actions">
               <button className="primary-control" onClick={startChallenge}>{isActive ? 'Restart broken machine' : 'Start challenge'}</button>
               <button disabled={!isActive} onClick={onOpenDesigner}>Open Designer</button>
