@@ -6,6 +6,7 @@ import { ExecutionTrace } from './components/ExecutionTrace'
 import { ExecutionTree } from './components/ExecutionTree'
 import { InputTape } from './components/InputTape'
 import { MachineView } from './components/MachineView'
+import { PDAEditor } from './components/PDAEditor'
 import { StackTimeline } from './components/StackTimeline'
 import { StackView } from './components/StackView'
 import { TestBench } from './components/TestBench'
@@ -23,7 +24,7 @@ const speedOptions = [
   { label: '2×', ms: 260 },
 ]
 
-type AppView = 'workspace' | 'derivations' | 'conversion' | 'tests'
+type AppView = 'workspace' | 'derivations' | 'conversion' | 'designer' | 'tests'
 
 export default function App() {
   const [grammar, setGrammar] = useState(defaultGrammar)
@@ -79,11 +80,19 @@ export default function App() {
     reset(input, mode)
   }
 
-  const useGeneratedMachine = (nextMachine: PDA) => {
+  const replaceMachine = (nextMachine: PDA, nextView: AppView = 'workspace') => {
     setMachine(nextMachine)
     setRunning(false)
     setHistory([initialConfiguration(nextMachine, input, acceptanceMode)])
-    setView('workspace')
+    setView(nextView)
+  }
+
+  const useGeneratedMachine = (nextMachine: PDA) => replaceMachine(nextMachine)
+
+  const editMachine = (nextMachine: PDA) => {
+    setMachine(nextMachine)
+    setRunning(false)
+    setHistory([initialConfiguration(nextMachine, input, acceptanceMode)])
   }
 
   const debugInput = (nextInput: string) => {
@@ -110,6 +119,7 @@ export default function App() {
           <button className={view === 'workspace' ? 'active-tab' : ''} onClick={() => setView('workspace')}>Workspace</button>
           <button className={view === 'derivations' ? 'active-tab' : ''} onClick={() => setView('derivations')}>Derivations</button>
           <button className={view === 'conversion' ? 'active-tab' : ''} onClick={() => setView('conversion')}>CFG → PDA</button>
+          <button className={view === 'designer' ? 'active-tab' : ''} onClick={() => setView('designer')}>Designer</button>
           <button onClick={() => {
             setView('workspace')
             window.setTimeout(() => document.getElementById('execution-tree')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0)
@@ -124,6 +134,8 @@ export default function App() {
         <DerivationExplorer grammarSource={grammar} target={input} onBack={() => setView('workspace')} />
       ) : view === 'conversion' ? (
         <ConversionExplorer grammarSource={grammar} target={input} onBack={() => setView('workspace')} onUseMachine={useGeneratedMachine} />
+      ) : view === 'designer' ? (
+        <PDAEditor machine={machine} onChange={editMachine} onBack={() => setView('workspace')} />
       ) : view === 'tests' ? (
         <TestBench machine={machine} mode={acceptanceMode} onBack={() => setView('workspace')} onDebugInput={debugInput} />
       ) : <>
