@@ -1,26 +1,29 @@
 {
   "name": "stacktrace-cfg-pda-debugger",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc -b",
     "test": "vitest run",
+    "test:watch": "vitest",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "typescript": "latest",
     "react": "latest",
-    "react-dom": "latest",
-    "reactflow": "latest"
+    "react-dom": "latest"
   },
   "devDependencies": {
+    "@testing-library/react": "latest",
+    "@testing-library/user-event": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
+    "jsdom": "latest",
+    "typescript": "latest",
+    "vite": "latest",
     "vitest": "latest"
   }
 }
