@@ -12,18 +12,20 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: package.json
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
+          cache-dependency-path: package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
       - name: Unit and regression tests
         run: npm test
-      - name: Typecheck and production build
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Production build
         run: npm run build
       - name: Upload production build
         uses: actions/upload-artifact@v4
