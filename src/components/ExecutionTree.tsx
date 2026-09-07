@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { buildExecutionTree } from '../core/pda/executionTree'
 import type { AcceptanceMode, Configuration, PDA } from '../core/pda/types'
+import '../styles/tree-controls.css'
 
 interface ExecutionTreeProps {
   machine: PDA
@@ -35,10 +36,10 @@ export function ExecutionTree({ machine, input, mode, onSelectPath }: ExecutionT
     const ids = new Set<string>()
     if (!acceptedNode) return ids
     const byId = new Map(result.nodes.map((node) => [node.id, node]))
-    let cursor = acceptedNode
+    let cursor: typeof acceptedNode | undefined = acceptedNode
     while (cursor) {
       ids.add(cursor.id)
-      cursor = cursor.parentId ? byId.get(cursor.parentId)! : undefined as never
+      cursor = cursor.parentId ? byId.get(cursor.parentId) : undefined
     }
     return ids
   }, [acceptedNode, result.nodes])
