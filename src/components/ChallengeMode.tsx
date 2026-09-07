@@ -3,6 +3,7 @@ import { runLanguageTests } from '../core/pda/testBench'
 import type { AcceptanceMode, PDA } from '../core/pda/types'
 import { challenges } from '../data/challenges'
 import '../styles/challenges.css'
+import '../styles/challenge-score.css'
 
 interface ChallengeModeProps {
   machine: PDA
@@ -17,14 +18,20 @@ interface ChallengeModeProps {
 export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveChallenge, onLoadMachine, onOpenDesigner, onBack }: ChallengeModeProps) {
   const [selectedId, setSelectedId] = useState(activeChallengeId || challenges[0].id)
   const [showHint, setShowHint] = useState(false)
+  const [hintUsed, setHintUsed] = useState(false)
   const selected = challenges.find((challenge) => challenge.id === selectedId) || challenges[0]
   const isActive = activeChallengeId === selected.id
   const challengeMode = selected.acceptanceMode
   const publicResults = useMemo(() => runLanguageTests(machine, selected.publicTests, challengeMode), [machine, selected, challengeMode])
   const hiddenResults = useMemo(() => runLanguageTests(machine, selected.hiddenTests, challengeMode), [machine, selected, challengeMode])
-  const publicPassed = publicResults.every((result) => result.passed)
-  const hiddenPassed = hiddenResults.every((result) => result.passed)
+  const publicPassedCount = publicResults.filter((result) => result.passed).length
+  const hiddenPassedCount = hiddenResults.filter((result) => result.passed).length
+  const publicPassed = publicPassedCount === publicResults.length
+  const hiddenPassed = hiddenPassedCount === hiddenResults.length
   const solved = isActive && publicPassed && hiddenPassed
+  const score = isActive
+    ? Math.round((publicPassedCount / Math.max(1, publicResults.length)) * 40 + (hiddenPassedCount / Math.max(1, hiddenResults.length)) * 50 + (hintUsed ? 0 : 10))
+    : 0
 
   const startChallenge = () => {
     onSetActiveChallenge(selected.id)
@@ -34,6 +41,18 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
       transitions: selected.brokenMachine.transitions.map((transition) => ({ ...transition })),
     })
     setShowHint(false)
+    setHintUsed(false)
+  }
+
+  const toggleHint = () => {
+    if (!showHint) setHintUsed(true)
+    setShowHint((value) => !value)
+  }
+
+  const selectChallenge = (id: string) => {
+    setSelectedId(id)
+    setShowHint(false)
+    if (id !== activeChallengeId) setHintUsed(false)
   }
 
   return (
@@ -47,7 +66,7 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
         <aside className="panel challenge-list">
           <div className="panel-heading"><span>CHALLENGES</span><span>{challenges.length} LABS</span></div>
           {challenges.map((challenge) => (
-            <button key={challenge.id} className={challenge.id === selected.id ? 'selected' : ''} onClick={() => { setSelectedId(challenge.id); setShowHint(false) }}>
+            <button key={challenge.id} className={challenge.id === selected.id ? 'selected' : ''} onClick={() => selectChallenge(challenge.id)}>
               <span><b>{challenge.title}</b><small>{challenge.concept}</small></span>
               <i>{challenge.id === activeChallengeId ? 'ACTIVE' : challenge.difficulty}</i>
             </button>
@@ -66,17 +85,18 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
             <div className="challenge-actions">
               <button className="primary-control" onClick={startChallenge}>{isActive ? 'Restart broken machine' : 'Start challenge'}</button>
               <button disabled={!isActive} onClick={onOpenDesigner}>Open Designer</button>
-              <button onClick={() => setShowHint((value) => !value)}>{showHint ? 'Hide hint' : 'Show hint'}</button>
+              <button onClick={toggleHint}>{showHint ? 'Hide hint' : 'Show hint'}</button>
             </div>
-            {showHint && <div className="challenge-hint"><small>HINT</small><span>{selected.hint}</span></div>}
+            {showHint && <div className="challenge-hint"><small>HINT · NO-HINT BONUS FORFEITED</small><span>{selected.hint}</span></div>}
           </section>
 
           <section className="panel challenge-tests">
             <div className="panel-heading"><span>VALIDATION</span><span>{solved ? 'SOLVED' : isActive ? 'CHECKING CURRENT MACHINE' : 'START TO EDIT'}</span></div>
-            <div className="challenge-score">
-              <div className={isActive && publicPassed ? 'pass' : isActive ? 'fail' : ''}><small>PUBLIC</small><strong>{isActive ? `${publicResults.filter((result) => result.passed).length}/${publicResults.length}` : '—'}</strong></div>
-              <div className={isActive && hiddenPassed ? 'pass' : isActive ? 'fail' : ''}><small>HIDDEN</small><strong>{isActive ? `${hiddenResults.filter((result) => result.passed).length}/${hiddenResults.length}` : '—'}</strong></div>
-              <div className={solved ? 'pass' : ''}><small>STATUS</small><strong>{solved ? 'SOLVED' : isActive ? 'IN PROGRESS' : 'IDLE'}</strong></div>
+            <div className="challenge-score challenge-score-four">
+              <div className={isActive && publicPassed ? 'pass' : isActive ? 'fail' : ''}><small>PUBLIC · 40</small><strong>{isActive ? `${publicPassedCount}/${publicResults.length}` : '—'}</strong></div>
+              <div className={isActive && hiddenPassed ? 'pass' : isActive ? 'fail' : ''}><small>HIDDEN · 50</small><strong>{isActive ? `${hiddenPassedCount}/${hiddenResults.length}` : '—'}</strong></div>
+              <div className={isActive && !hintUsed ? 'pass' : isActive ? 'hint-used' : ''}><small>NO-HINT · 10</small><strong>{isActive ? hintUsed ? '0' : '10' : '—'}</strong></div>
+              <div className={solved ? 'pass total-score' : 'total-score'}><small>SCORE</small><strong>{isActive ? `${score}/100` : '—'}</strong></div>
             </div>
 
             <div className="challenge-result-list">
@@ -95,7 +115,7 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
                 </div>
               ))}
             </div>
-            {solved && <div className="challenge-solved"><span>✓</span><div><strong>Repair verified.</strong><small>All public and hidden assertions pass on the current PDA.</small></div></div>}
+            {solved && <div className="challenge-solved"><span>✓</span><div><strong>Repair verified · {score}/100.</strong><small>All public and hidden assertions pass using {challengeMode === 'final-state' ? 'final-state' : 'empty-stack'} acceptance.</small></div></div>}
           </section>
         </div>
       </div>
