@@ -56,7 +56,7 @@ describe('StackTrace app integration', () => {
     await user.click(screen.getByRole('button', { name: /Load input/i }))
 
     const step = screen.getByRole('button', { name: /Step/ })
-    for (let index = 0; index < 6; index += 1) fireEvent.click(step)
+    for (let index = 0; index < 7; index += 1) fireEvent.click(step)
 
     expect(screen.getByText('BRANCH TERMINATED')).toBeTruthy()
     expect(screen.getByText(/Rejected — every explored computation terminates/)).toBeTruthy()
