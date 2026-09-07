@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { CFGAnalysis } from './components/CFGAnalysis'
 import { CFGEditor } from './components/CFGEditor'
+import { ChallengeMode } from './components/ChallengeMode'
 import { ConversionExplorer } from './components/ConversionExplorer'
 import { DerivationExplorer } from './components/DerivationExplorer'
 import { ExecutionTrace } from './components/ExecutionTrace'
@@ -10,8 +12,10 @@ import { PDAEditor } from './components/PDAEditor'
 import { StackTimeline } from './components/StackTimeline'
 import { StackView } from './components/StackView'
 import { TestBench } from './components/TestBench'
+import { WorkspaceShare } from './components/WorkspaceShare'
 import { describeTransition, initialConfiguration, matchingTransitions, nextConfigurations } from './core/pda/simulator'
 import type { AcceptanceMode, Configuration, PDA } from './core/pda/types'
+import { loadWorkspace, readWorkspaceFromUrl, saveWorkspace, type WorkspaceSnapshot } from './core/workspace/persistence'
 import { anbnMachine } from './data/sampleMachine'
 import './styles/app.css'
 
@@ -24,17 +28,20 @@ const speedOptions = [
   { label: '2×', ms: 260 },
 ]
 
-type AppView = 'workspace' | 'derivations' | 'conversion' | 'designer' | 'tests'
+type AppView = 'workspace' | 'derivations' | 'analysis' | 'conversion' | 'designer' | 'tests' | 'challenges' | 'share'
 
 export default function App() {
-  const [grammar, setGrammar] = useState(defaultGrammar)
-  const [input, setInput] = useState('aaabbb')
-  const [acceptanceMode, setAcceptanceMode] = useState<AcceptanceMode>('final-state')
-  const [machine, setMachine] = useState<PDA>(anbnMachine)
-  const [history, setHistory] = useState<Configuration[]>(() => [initialConfiguration(anbnMachine, 'aaabbb')])
+  const [boot] = useState(() => readWorkspaceFromUrl() ?? loadWorkspace())
+  const [grammar, setGrammar] = useState(boot?.grammar ?? defaultGrammar)
+  const [input, setInput] = useState(boot?.input ?? 'aaabbb')
+  const [acceptanceMode, setAcceptanceMode] = useState<AcceptanceMode>(boot?.acceptanceMode ?? 'final-state')
+  const [machine, setMachine] = useState<PDA>(boot?.machine ?? anbnMachine)
+  const [history, setHistory] = useState<Configuration[]>(() => [initialConfiguration(boot?.machine ?? anbnMachine, boot?.input ?? 'aaabbb', boot?.acceptanceMode ?? 'final-state')])
   const [running, setRunning] = useState(false)
   const [speed, setSpeed] = useState(720)
   const [view, setView] = useState<AppView>('workspace')
+  const [designerReturnView, setDesignerReturnView] = useState<AppView>('workspace')
+  const [activeChallengeId, setActiveChallengeId] = useState<string | null>(boot?.activeChallengeId ?? null)
 
   const activeIndex = history.length - 1
   const current = history[activeIndex]
@@ -45,10 +52,11 @@ export default function App() {
     [machine, current.transitionId],
   )
   const availableTransitions = useMemo(() => matchingTransitions(machine, current), [machine, current])
+  const workspaceSnapshot = useMemo(() => ({ grammar, input, acceptanceMode, machine, activeChallengeId }), [grammar, input, acceptanceMode, machine, activeChallengeId])
 
-  const reset = (nextInput = input, mode = acceptanceMode) => {
+  const reset = (nextInput = input, mode = acceptanceMode, nextMachine = machine) => {
     setRunning(false)
-    setHistory([initialConfiguration(machine, nextInput, mode)])
+    setHistory([initialConfiguration(nextMachine, nextInput, mode)])
   }
 
   const step = () => {
@@ -59,6 +67,10 @@ export default function App() {
     const next = nextConfigurations(machine, current, acceptanceMode, history.length - 1)
     setHistory((prev) => [...prev, next[0]])
   }
+
+  useEffect(() => {
+    saveWorkspace(workspaceSnapshot)
+  }, [workspaceSnapshot])
 
   useEffect(() => {
     if (!running) return
@@ -75,6 +87,12 @@ export default function App() {
     setHistory((prev) => prev.slice(0, index + 1))
   }
 
+  const loadBranchPath = (path: Configuration[]) => {
+    if (!path.length) return
+    setRunning(false)
+    setHistory(path)
+  }
+
   const updateMode = (mode: AcceptanceMode) => {
     setAcceptanceMode(mode)
     reset(input, mode)
@@ -82,23 +100,50 @@ export default function App() {
 
   const replaceMachine = (nextMachine: PDA, nextView: AppView = 'workspace') => {
     setMachine(nextMachine)
-    setRunning(false)
-    setHistory([initialConfiguration(nextMachine, input, acceptanceMode)])
+    reset(input, acceptanceMode, nextMachine)
     setView(nextView)
   }
 
-  const useGeneratedMachine = (nextMachine: PDA) => replaceMachine(nextMachine)
+  const useGeneratedMachine = (nextMachine: PDA) => {
+    setActiveChallengeId(null)
+    replaceMachine(nextMachine)
+  }
 
   const editMachine = (nextMachine: PDA) => {
     setMachine(nextMachine)
-    setRunning(false)
-    setHistory([initialConfiguration(nextMachine, input, acceptanceMode)])
+    reset(input, acceptanceMode, nextMachine)
   }
 
   const debugInput = (nextInput: string) => {
     setInput(nextInput)
     setRunning(false)
     setHistory([initialConfiguration(machine, nextInput, acceptanceMode)])
+    setView('workspace')
+  }
+
+  const openDesigner = (returnView: AppView = 'workspace') => {
+    setDesignerReturnView(returnView)
+    setView('designer')
+  }
+
+  const loadChallengeMachine = (nextMachine: PDA) => {
+    setMachine(nextMachine)
+    reset(input, acceptanceMode, nextMachine)
+  }
+
+  const applyAnalyzedGrammar = (source: string) => {
+    setGrammar(source)
+    setView('workspace')
+  }
+
+  const importWorkspace = (snapshot: WorkspaceSnapshot) => {
+    setGrammar(snapshot.grammar)
+    setInput(snapshot.input)
+    setAcceptanceMode(snapshot.acceptanceMode)
+    setMachine(snapshot.machine)
+    setActiveChallengeId(snapshot.activeChallengeId ?? null)
+    setRunning(false)
+    setHistory([initialConfiguration(snapshot.machine, snapshot.input, snapshot.acceptanceMode)])
     setView('workspace')
   }
 
@@ -117,27 +162,43 @@ export default function App() {
         </div>
         <nav aria-label="Workspace views">
           <button className={view === 'workspace' ? 'active-tab' : ''} onClick={() => setView('workspace')}>Workspace</button>
-          <button className={view === 'derivations' ? 'active-tab' : ''} onClick={() => setView('derivations')}>Derivations</button>
+          <button className={view === 'derivations' ? 'active-tab' : ''} onClick={() => setView('derivations')}>Derive</button>
+          <button className={view === 'analysis' ? 'active-tab' : ''} onClick={() => setView('analysis')}>Analyze</button>
           <button className={view === 'conversion' ? 'active-tab' : ''} onClick={() => setView('conversion')}>CFG → PDA</button>
-          <button className={view === 'designer' ? 'active-tab' : ''} onClick={() => setView('designer')}>Designer</button>
+          <button className={view === 'designer' ? 'active-tab' : ''} onClick={() => openDesigner('workspace')}>Designer</button>
           <button onClick={() => {
             setView('workspace')
             window.setTimeout(() => document.getElementById('execution-tree')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0)
-          }}>Execution Tree</button>
-          <button className={view === 'tests' ? 'active-tab' : ''} onClick={() => setView('tests')}>Test Bench</button>
-          <button disabled title="Challenge mode is planned after the core debugger">Challenges <small>SOON</small></button>
+          }}>Tree</button>
+          <button className={view === 'tests' ? 'active-tab' : ''} onClick={() => setView('tests')}>Tests</button>
+          <button className={view === 'challenges' ? 'active-tab' : ''} onClick={() => setView('challenges')}>Challenges</button>
+          <button className={view === 'share' ? 'active-tab' : ''} onClick={() => setView('share')}>Share</button>
         </nav>
         <div className={`status-badge ${current.status}`}><span className="status-light" />{current.status.toUpperCase()}</div>
       </header>
 
       {view === 'derivations' ? (
         <DerivationExplorer grammarSource={grammar} target={input} onBack={() => setView('workspace')} />
+      ) : view === 'analysis' ? (
+        <CFGAnalysis grammarSource={grammar} onApplyGrammar={applyAnalyzedGrammar} onBack={() => setView('workspace')} />
       ) : view === 'conversion' ? (
         <ConversionExplorer grammarSource={grammar} target={input} onBack={() => setView('workspace')} onUseMachine={useGeneratedMachine} />
       ) : view === 'designer' ? (
-        <PDAEditor machine={machine} onChange={editMachine} onBack={() => setView('workspace')} />
+        <PDAEditor machine={machine} onChange={editMachine} onBack={() => setView(designerReturnView)} />
       ) : view === 'tests' ? (
         <TestBench machine={machine} mode={acceptanceMode} onBack={() => setView('workspace')} onDebugInput={debugInput} />
+      ) : view === 'challenges' ? (
+        <ChallengeMode
+          machine={machine}
+          mode={acceptanceMode}
+          activeChallengeId={activeChallengeId}
+          onSetActiveChallenge={setActiveChallengeId}
+          onLoadMachine={loadChallengeMachine}
+          onOpenDesigner={() => openDesigner('challenges')}
+          onBack={() => setView('workspace')}
+        />
+      ) : view === 'share' ? (
+        <WorkspaceShare workspace={workspaceSnapshot} onImport={importWorkspace} onBack={() => setView('workspace')} />
       ) : <>
       <section className="run-strip" aria-live="polite">
         <div className="run-state"><span className={`pulse ${running ? 'running' : ''}`} /><b>{running ? 'RUNNING' : 'DEBUG READY'}</b><span>{resultText}</span></div>
@@ -204,7 +265,7 @@ export default function App() {
 
         <section className="telemetry-column">
           <StackTimeline history={history} activeIndex={activeIndex} onSelect={selectHistory} />
-          <ExecutionTree machine={machine} input={current.input} mode={acceptanceMode} />
+          <ExecutionTree machine={machine} input={current.input} mode={acceptanceMode} onSelectPath={loadBranchPath} />
           <ExecutionTrace machine={machine} history={history} activeIndex={activeIndex} onSelect={selectHistory} />
         </section>
       </section>
