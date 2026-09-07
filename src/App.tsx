@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CFGEditor } from './components/CFGEditor'
+import { ConversionExplorer } from './components/ConversionExplorer'
 import { DerivationExplorer } from './components/DerivationExplorer'
 import { ExecutionTrace } from './components/ExecutionTrace'
 import { ExecutionTree } from './components/ExecutionTree'
@@ -8,7 +9,7 @@ import { MachineView } from './components/MachineView'
 import { StackTimeline } from './components/StackTimeline'
 import { StackView } from './components/StackView'
 import { describeTransition, initialConfiguration, matchingTransitions, nextConfigurations } from './core/pda/simulator'
-import type { AcceptanceMode, Configuration } from './core/pda/types'
+import type { AcceptanceMode, Configuration, PDA } from './core/pda/types'
 import { anbnMachine } from './data/sampleMachine'
 import './styles/app.css'
 
@@ -21,28 +22,31 @@ const speedOptions = [
   { label: '2×', ms: 260 },
 ]
 
+type AppView = 'workspace' | 'derivations' | 'conversion'
+
 export default function App() {
   const [grammar, setGrammar] = useState(defaultGrammar)
   const [input, setInput] = useState('aaabbb')
   const [acceptanceMode, setAcceptanceMode] = useState<AcceptanceMode>('final-state')
+  const [machine, setMachine] = useState<PDA>(anbnMachine)
   const [history, setHistory] = useState<Configuration[]>(() => [initialConfiguration(anbnMachine, 'aaabbb')])
   const [running, setRunning] = useState(false)
   const [speed, setSpeed] = useState(720)
-  const [view, setView] = useState<'workspace' | 'derivations'>('workspace')
+  const [view, setView] = useState<AppView>('workspace')
 
   const activeIndex = history.length - 1
   const current = history[activeIndex]
   const previous = history[Math.max(0, activeIndex - 1)]
   const unread = current.input.slice(current.inputIndex) || 'ε'
   const transition = useMemo(
-    () => anbnMachine.transitions.find((item) => item.id === current.transitionId),
-    [current.transitionId],
+    () => machine.transitions.find((item) => item.id === current.transitionId),
+    [machine, current.transitionId],
   )
-  const availableTransitions = useMemo(() => matchingTransitions(anbnMachine, current), [current])
+  const availableTransitions = useMemo(() => matchingTransitions(machine, current), [machine, current])
 
   const reset = (nextInput = input, mode = acceptanceMode) => {
     setRunning(false)
-    setHistory([initialConfiguration(anbnMachine, nextInput, mode)])
+    setHistory([initialConfiguration(machine, nextInput, mode)])
   }
 
   const step = () => {
@@ -50,7 +54,7 @@ export default function App() {
       setRunning(false)
       return
     }
-    const next = nextConfigurations(anbnMachine, current, acceptanceMode, history.length - 1)
+    const next = nextConfigurations(machine, current, acceptanceMode, history.length - 1)
     setHistory((prev) => [...prev, next[0]])
   }
 
@@ -74,6 +78,13 @@ export default function App() {
     reset(input, mode)
   }
 
+  const useGeneratedMachine = (nextMachine: PDA) => {
+    setMachine(nextMachine)
+    setRunning(false)
+    setHistory([initialConfiguration(nextMachine, input, acceptanceMode)])
+    setView('workspace')
+  }
+
   const resultText = current.status === 'accepted'
     ? 'Input accepted by the current PDA.'
     : current.status === 'dead'
@@ -90,6 +101,7 @@ export default function App() {
         <nav aria-label="Workspace views">
           <button className={view === 'workspace' ? 'active-tab' : ''} onClick={() => setView('workspace')}>Workspace</button>
           <button className={view === 'derivations' ? 'active-tab' : ''} onClick={() => setView('derivations')}>Derivations</button>
+          <button className={view === 'conversion' ? 'active-tab' : ''} onClick={() => setView('conversion')}>CFG → PDA</button>
           <button onClick={() => {
             setView('workspace')
             window.setTimeout(() => document.getElementById('execution-tree')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0)
@@ -101,6 +113,8 @@ export default function App() {
 
       {view === 'derivations' ? (
         <DerivationExplorer grammarSource={grammar} target={input} onBack={() => setView('workspace')} />
+      ) : view === 'conversion' ? (
+        <ConversionExplorer grammarSource={grammar} target={input} onBack={() => setView('workspace')} onUseMachine={useGeneratedMachine} />
       ) : <>
       <section className="run-strip" aria-live="polite">
         <div className="run-state"><span className={`pulse ${running ? 'running' : ''}`} /><b>{running ? 'RUNNING' : 'DEBUG READY'}</b><span>{resultText}</span></div>
@@ -115,7 +129,7 @@ export default function App() {
 
       <div className="workspace-grid">
         <CFGEditor value={grammar} onChange={setGrammar} />
-        <MachineView machine={anbnMachine} activeState={current.state} activeTransitionId={current.transitionId} />
+        <MachineView machine={machine} activeState={current.state} activeTransitionId={current.transitionId} />
         <aside className="configuration-column">
           <section className="panel config-panel">
             <div className="panel-heading"><div><span>CONFIGURATION</span><span className="heading-separator">/</span><span>C{activeIndex}</span></div><span>{acceptanceMode === 'final-state' ? 'FINAL STATE' : 'EMPTY STACK'}</span></div>
@@ -167,8 +181,8 @@ export default function App() {
 
         <section className="telemetry-column">
           <StackTimeline history={history} activeIndex={activeIndex} onSelect={selectHistory} />
-          <ExecutionTree machine={anbnMachine} input={current.input} mode={acceptanceMode} />
-          <ExecutionTrace machine={anbnMachine} history={history} activeIndex={activeIndex} onSelect={selectHistory} />
+          <ExecutionTree machine={machine} input={current.input} mode={acceptanceMode} />
+          <ExecutionTrace machine={machine} history={history} activeIndex={activeIndex} onSelect={selectHistory} />
         </section>
       </section>
       </>}
