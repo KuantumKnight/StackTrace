@@ -8,6 +8,7 @@ import { InputTape } from './components/InputTape'
 import { MachineView } from './components/MachineView'
 import { StackTimeline } from './components/StackTimeline'
 import { StackView } from './components/StackView'
+import { TestBench } from './components/TestBench'
 import { describeTransition, initialConfiguration, matchingTransitions, nextConfigurations } from './core/pda/simulator'
 import type { AcceptanceMode, Configuration, PDA } from './core/pda/types'
 import { anbnMachine } from './data/sampleMachine'
@@ -22,7 +23,7 @@ const speedOptions = [
   { label: '2×', ms: 260 },
 ]
 
-type AppView = 'workspace' | 'derivations' | 'conversion'
+type AppView = 'workspace' | 'derivations' | 'conversion' | 'tests'
 
 export default function App() {
   const [grammar, setGrammar] = useState(defaultGrammar)
@@ -85,6 +86,13 @@ export default function App() {
     setView('workspace')
   }
 
+  const debugInput = (nextInput: string) => {
+    setInput(nextInput)
+    setRunning(false)
+    setHistory([initialConfiguration(machine, nextInput, acceptanceMode)])
+    setView('workspace')
+  }
+
   const resultText = current.status === 'accepted'
     ? 'Input accepted by the current PDA.'
     : current.status === 'dead'
@@ -106,6 +114,7 @@ export default function App() {
             setView('workspace')
             window.setTimeout(() => document.getElementById('execution-tree')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0)
           }}>Execution Tree</button>
+          <button className={view === 'tests' ? 'active-tab' : ''} onClick={() => setView('tests')}>Test Bench</button>
           <button disabled title="Challenge mode is planned after the core debugger">Challenges <small>SOON</small></button>
         </nav>
         <div className={`status-badge ${current.status}`}><span className="status-light" />{current.status.toUpperCase()}</div>
@@ -115,6 +124,8 @@ export default function App() {
         <DerivationExplorer grammarSource={grammar} target={input} onBack={() => setView('workspace')} />
       ) : view === 'conversion' ? (
         <ConversionExplorer grammarSource={grammar} target={input} onBack={() => setView('workspace')} onUseMachine={useGeneratedMachine} />
+      ) : view === 'tests' ? (
+        <TestBench machine={machine} mode={acceptanceMode} onBack={() => setView('workspace')} onDebugInput={debugInput} />
       ) : <>
       <section className="run-strip" aria-live="polite">
         <div className="run-state"><span className={`pulse ${running ? 'running' : ''}`} /><b>{running ? 'RUNNING' : 'DEBUG READY'}</b><span>{resultText}</span></div>
