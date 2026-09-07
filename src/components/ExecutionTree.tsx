@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import { buildExecutionTree } from '../core/pda/executionTree'
-import type { AcceptanceMode, PDA } from '../core/pda/types'
+import type { AcceptanceMode, Configuration, PDA } from '../core/pda/types'
 
 interface ExecutionTreeProps {
   machine: PDA
   input: string
   mode: AcceptanceMode
+  onSelectPath?: (path: Configuration[]) => void
 }
 
 interface PositionedNode {
@@ -21,7 +22,7 @@ interface PositionedNode {
   reason?: string
 }
 
-export function ExecutionTree({ machine, input, mode }: ExecutionTreeProps) {
+export function ExecutionTree({ machine, input, mode, onSelectPath }: ExecutionTreeProps) {
   const result = useMemo(() => buildExecutionTree(machine, input, mode), [machine, input, mode])
   const [selectedId, setSelectedId] = useState('n0')
 
@@ -62,6 +63,20 @@ export function ExecutionTree({ machine, input, mode }: ExecutionTreeProps) {
   const height = Math.max(180, 78 + Math.max(...positioned.map((node) => node.y), 80))
   const selected = positioned.find((node) => node.id === selectedId) || positioned[0]
 
+  const selectNode = (id: string) => {
+    setSelectedId(id)
+    if (!onSelectPath) return
+
+    const byId = new Map(result.nodes.map((node) => [node.id, node]))
+    const path: Configuration[] = []
+    let cursor = byId.get(id)
+    while (cursor) {
+      path.unshift({ ...cursor.config })
+      cursor = cursor.parentId ? byId.get(cursor.parentId) : undefined
+    }
+    if (path.length) onSelectPath(path)
+  }
+
   return (
     <section className="panel execution-tree-panel" id="execution-tree">
       <div className="panel-heading">
@@ -81,10 +96,10 @@ export function ExecutionTree({ machine, input, mode }: ExecutionTreeProps) {
               key={node.id}
               className={`tree-node ${node.status} ${selected?.id === node.id ? 'selected' : ''}`}
               transform={`translate(${node.x} ${node.y})`}
-              onClick={() => setSelectedId(node.id)}
+              onClick={() => selectNode(node.id)}
               role="button"
               tabIndex={0}
-              onKeyDown={(event) => (event.key === 'Enter' || event.key === ' ') && setSelectedId(node.id)}
+              onKeyDown={(event) => (event.key === 'Enter' || event.key === ' ') && selectNode(node.id)}
             >
               <circle r="17" />
               <text className="tree-state" textAnchor="middle" y="3">{node.state.replace('qAccept', 'qA')}</text>
@@ -100,6 +115,7 @@ export function ExecutionTree({ machine, input, mode }: ExecutionTreeProps) {
           <span><small>UNREAD</small><b>{selected.unread}</b></span>
           <span><small>STACK</small><b>{selected.stack}</b></span>
           <span><small>STATUS</small><b className={selected.status}>{selected.status}</b></span>
+          {onSelectPath && <span><small>ACTION</small><b>CLICK = LOAD BRANCH</b></span>}
           {selected.reason && <span className="tree-reason"><small>WHY</small><b>{selected.reason}</b></span>}
         </div>
       )}
