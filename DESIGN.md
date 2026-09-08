@@ -2,16 +2,18 @@
 
 ## Product character
 
-StackTrace is a computational studio for learning how grammars become machines. The interface should feel like a calm, high-signal lab: expressive enough to make abstract state changes memorable, structured enough that students can always tell what is active, what changed, and what to do next.
+StackTrace is a computational studio for learning how grammars become machines. The interface should feel like a focused, high-signal instrument panel: expressive enough to make abstract state changes memorable, structured enough that students can always tell what is active, what changed, and what to do next.
 
-The redesign replaces the neon command-console look with a warm editorial workspace:
+The redesign evolves the original command-console look into a cool technical workspace:
 
-- paper canvas for orientation and breathing room;
+- cool neutral canvas for orientation and long-session comfort;
 - ink surfaces for the debugger's dense technical work;
-- violet, cyan, coral, and mint as semantic accents rather than decoration;
+- cobalt as the single action accent, with green, amber, and red reserved for semantic outcomes;
 - generous type hierarchy and short explanatory labels;
-- rounded containers with a few sharper “instrument” surfaces for contrast;
+- a consistent 16px surface radius and 10px control radius;
 - motion reserved for state changes, playback, and attention guidance.
+
+Design dials: variance 6/10, motion 4/10, density 8/10. The product is dense by necessity, so hierarchy comes from spacing, contrast, and typography rather than adding more cards.
 
 ## Design references
 
@@ -29,46 +31,46 @@ These references informed the system, without copying any product's visual ident
 ### Color
 
 ```css
---canvas: #f5f2eb;
---canvas-deep: #ebe6dc;
---ink: #17162a;
---ink-soft: #3f3c55;
---muted: #77738a;
---line: #ded9cf;
---line-strong: #c7c1b6;
---surface: #fffdf8;
---surface-soft: #f8f6f0;
---violet: #5e4bd6;
---cyan: #1aa7a1;
---coral: #e76f51;
---mint: #3a9d7c;
---amber: #c4872f;
---danger: #c94d5c;
+--canvas: #f2f4f7;
+--canvas-deep: #e7ebf0;
+--ink: #151925;
+--ink-soft: #394354;
+--muted: #626d7d;
+--line: #d6dbe3;
+--line-strong: #bec6d1;
+--surface: #fcfdff;
+--surface-soft: #f5f7fa;
+--accent: #3159c7;
+--active: #256e88;
+--success: #28765c;
+--warning: #946615;
+--danger: #b13d4b;
 ```
 
-Color roles are semantic. Violet means primary action and focus, cyan means active computation, mint means accepted, coral means attention or rejection, and amber means an inconclusive limit.
+Color roles are semantic. Cobalt means primary action and focus, blue-teal means active computation, green means accepted, red means rejection, and amber means an inconclusive limit. Status meaning is always paired with text.
 
 ### Type
 
-- Display: system sans with a strong weight and compact tracking for page titles.
-- Body: system sans, 14–16px, comfortable line height.
+- Display: Segoe UI Variable or the platform system sans, with strong weight and compact tracking for page titles.
+- Body: system sans, 14-16px, comfortable line height. Mobile form controls remain at 16px or larger.
 - Machine language: platform monospace, used only for grammar, transitions, states, and numeric telemetry.
-- Labels: 10–11px uppercase with modest tracking; never use tiny text for essential instructions.
+- Labels: 10-12px with modest tracking; never use tiny text for essential instructions.
 
 ### Shape and depth
 
-- Page and feature surfaces: 18px radius.
-- Controls: 10–12px radius.
+- Page and feature surfaces: 16px radius.
+- Controls: 10px radius.
 - Pills: reserved for status, filters, and compact state labels.
 - Borders are quiet and warm; depth comes from a soft shadow and a one-pixel edge, not heavy outlines.
 
 ### Layout
 
 - Desktop: a centered 1500px workspace with 24px outer padding.
-- Navigation: one clear top-level row; active view is a filled pill.
+- Navigation: five primary destinations plus an Explore overflow for specialist tools. Desktop navigation stays on one line and mobile navigation reflows without horizontal scrolling.
 - Workspace: three-column instrument row above a two-column debugger/telemetry row.
 - Feature views: use a toolbar, a readable title, and bento panels with one obvious primary action.
-- Mobile: stack content in task order; keep horizontal machine/timeline canvases scrollable rather than shrinking labels into illegibility.
+- Tablet: move configuration below the editor and machine instead of forcing page-level horizontal scrolling.
+- Mobile: stack content in task order; only machine and trace canvases may scroll internally rather than shrinking labels into illegibility.
 
 ## Interaction rules
 
@@ -93,5 +95,7 @@ Color roles are semantic. Violet means primary action and focus, cyan means acti
 - all-caps copy as the main reading voice;
 - decorative gradients that compete with the graph or stack;
 - large walls of tiny monospace text;
+- page-level horizontal scrolling and overloaded navigation;
+- generic purple gradient branding;
 - generic SaaS cards that hide the formal model;
 - animation without a causal relationship to the computation.
