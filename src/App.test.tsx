@@ -53,7 +53,8 @@ describe('StackTrace app integration', () => {
     }
 
     expect(screen.getByText('STRING ACCEPTED')).toBeTruthy()
-    expect(screen.getByText(/selected acceptance condition is satisfied/i)).toBeTruthy()
+    expect(screen.getByText('ACCEPTED')).toBeTruthy()
+    expect(screen.getAllByText(/selected acceptance condition is satisfied/i).length).toBeGreaterThan(0)
   })
 
   it('keeps future configurations when moving Back and Forward', async () => {
