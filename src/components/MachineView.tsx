@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { PDA } from '../core/pda/types'
 import { transitionLabel } from './pdaEditorLayout'
 import { FluidMachineGraph } from './FluidMachineGraph'
@@ -12,7 +12,10 @@ interface MachineViewProps {
 
 export function MachineView({ machine, activeState, activeTransitionId, animationKey }: MachineViewProps) {
   const [zoom, setZoom] = useState(1)
+  const renderSequence = useRef(0)
+  renderSequence.current += 1
   const activeTransition = machine.transitions.find((transition) => transition.id === activeTransitionId)
+  const resolvedAnimationKey = animationKey ?? `${activeTransitionId ?? 'idle'}:${activeState}:${renderSequence.current}`
 
   return (
     <section className="panel machine-panel">
@@ -26,12 +29,12 @@ export function MachineView({ machine, activeState, activeTransitionId, animatio
       </div>
 
       <div className="machine-canvas" role="region" aria-label="PDA state graph" tabIndex={0}>
-        <div className="graph-watermark">LIVE MACHINE · CANVAS 60 FPS</div>
+        <div className="graph-watermark">LIVE MACHINE · SPRING GRAPH</div>
         <FluidMachineGraph
           machine={machine}
           activeState={activeState}
           activeTransitionId={activeTransitionId}
-          animationKey={animationKey}
+          animationKey={resolvedAnimationKey}
           zoom={zoom}
         />
 
