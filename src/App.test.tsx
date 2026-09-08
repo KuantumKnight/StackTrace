@@ -48,6 +48,7 @@ describe('StackTrace app integration', () => {
 
     render(<App />)
 
+    expect(document.querySelector('.machine-stage .fluid-machine-canvas')).toBeTruthy()
     for (let index = 0; index < 24 && !screen.queryByText('STRING ACCEPTED'); index += 1) {
       fireEvent.click(screen.getByRole('button', { name: 'Step →' }))
     }
@@ -94,11 +95,13 @@ describe('StackTrace app integration', () => {
     expect(screen.getByText('CLOSEST BRANCH')).toBeTruthy()
   })
 
-  it('exposes all seven repair levels', async () => {
+  it('exposes all seven repair levels with the same fluid machine renderer', async () => {
     const user = userEvent.setup()
     render(<App />)
     await user.click(screen.getByRole('button', { name: 'Challenges' }))
     expect(screen.getByText('7 LEVELS')).toBeTruthy()
     expect(screen.getByText(/Bad Terminal Matcher/)).toBeTruthy()
+    expect(document.querySelector('.challenge-machine-shell .fluid-machine-canvas')).toBeTruthy()
+    expect(document.querySelector('.challenge-machine-shell svg')).toBeNull()
   })
 })
