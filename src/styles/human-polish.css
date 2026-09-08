@@ -1,0 +1,603 @@
+/*
+  StackTrace human polish layer
+  Purpose: authored material, motion, and hierarchy without changing simulator semantics.
+*/
+
+:root {
+  --motion-fast: 150ms;
+  --motion-base: 260ms;
+  --motion-slow: 520ms;
+  --ease-standard: cubic-bezier(.2,.75,.2,1);
+  --ease-emphasized: cubic-bezier(.16,1,.3,1);
+  --glass-bg: rgba(255,254,249,.72);
+  --glass-bg-strong: rgba(255,254,249,.88);
+  --glass-border: rgba(94,98,106,.22);
+  --glass-shadow: 0 18px 48px rgba(24,28,36,.10), 0 2px 8px rgba(24,28,36,.05);
+  --section-gap: clamp(14px,1.5vw,24px);
+}
+
+html {
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+  font-synthesis: none;
+}
+
+body {
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 14% -8%, rgba(49,86,200,.12), transparent 31rem),
+    radial-gradient(circle at 88% 12%, rgba(13,118,111,.08), transparent 28rem),
+    linear-gradient(rgba(18,21,27,.024) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18,21,27,.024) 1px, transparent 1px),
+    var(--canvas);
+  background-size: auto, auto, 36px 36px, 36px 36px, auto;
+  background-attachment: fixed;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  opacity: .35;
+  background: linear-gradient(120deg, rgba(255,255,255,.28), transparent 38%, rgba(255,255,255,.12) 70%, transparent);
+}
+
+::selection {
+  color: #fff;
+  background: var(--accent);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(92,99,112,.42) transparent;
+}
+
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: rgba(92,99,112,.42);
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background-color: rgba(58,65,78,.58); }
+
+/* Route-level transition: every major view enters once, without perpetual motion. */
+#stacktrace-content > * {
+  animation: routeEnter var(--motion-slow) var(--ease-emphasized) both;
+}
+
+/* Floating glass chrome. */
+.studio-topbar {
+  top: 12px;
+  border-color: var(--glass-border);
+  background: var(--glass-bg-strong);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(22px) saturate(1.28);
+  -webkit-backdrop-filter: blur(22px) saturate(1.28);
+  transition:
+    background var(--motion-base) var(--ease-standard),
+    border-color var(--motion-base) var(--ease-standard),
+    box-shadow var(--motion-base) var(--ease-standard),
+    transform var(--motion-base) var(--ease-standard);
+}
+
+.studio-topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,0));
+  opacity: .42;
+}
+
+.studio-topbar > * { position: relative; z-index: 1; }
+
+.brand-button {
+  border-radius: 10px;
+  transition: background var(--motion-fast) ease, transform var(--motion-fast) ease;
+}
+.brand-button:hover:not(:disabled) { transform: translateY(-1px); }
+
+.brand-mark {
+  border-color: rgba(28,45,115,.74);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.22),
+    0 7px 20px rgba(49,86,200,.20);
+  transition: transform var(--motion-base) var(--ease-emphasized), box-shadow var(--motion-base) ease;
+}
+.brand-button:hover .brand-mark {
+  transform: rotate(-2deg) scale(1.035);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.28),
+    0 10px 24px rgba(49,86,200,.26);
+}
+
+.brand-copy strong {
+  font-weight: 790;
+  letter-spacing: -.035em;
+}
+.brand-copy > span { letter-spacing: .005em; }
+
+.studio-topbar nav button,
+.nav-overflow-trigger,
+.return-debugger {
+  position: relative;
+  overflow: hidden;
+  transition:
+    color var(--motion-fast) ease,
+    background var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
+}
+
+.studio-topbar nav button::after,
+.nav-overflow-trigger::after {
+  content: "";
+  position: absolute;
+  right: 12px;
+  bottom: 4px;
+  left: 12px;
+  height: 1px;
+  transform: scaleX(0);
+  transform-origin: center;
+  background: currentColor;
+  opacity: .5;
+  transition: transform var(--motion-base) var(--ease-emphasized);
+}
+.studio-topbar nav button:hover::after,
+.nav-overflow-trigger:hover::after { transform: scaleX(1); }
+.studio-topbar nav .active-tab::after { display: none; }
+
+.studio-topbar nav .active-tab {
+  border-color: rgba(18,21,27,.88);
+  background: rgba(18,21,27,.94);
+  box-shadow: 0 7px 18px rgba(18,21,27,.14);
+}
+
+.nav-menu {
+  transform-origin: top right;
+  border-color: var(--glass-border);
+  background: rgba(255,254,249,.94);
+  box-shadow: 0 24px 64px rgba(18,21,27,.16);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  animation: menuEnter 220ms var(--ease-emphasized) both;
+}
+
+.status-badge {
+  box-shadow: inset 0 1px rgba(255,255,255,.58);
+  transition: transform var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
+}
+.status-badge:hover { transform: translateY(-1px); }
+
+/* Hero: less SaaS card, more deliberate editorial instrument panel. */
+.workspace-hero {
+  margin-top: 22px;
+  border-color: rgba(0,0,0,.76);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(66,104,218,.18), transparent 31rem),
+    radial-gradient(circle at 92% 78%, rgba(35,151,139,.10), transparent 24rem),
+    linear-gradient(135deg, #15191f, #11151a 58%, #171c22);
+  box-shadow: 0 24px 70px rgba(17,21,27,.18), 0 2px 8px rgba(17,21,27,.10);
+  transition: box-shadow var(--motion-slow) var(--ease-standard), transform var(--motion-slow) var(--ease-standard);
+}
+.workspace-hero:hover {
+  box-shadow: 0 30px 86px rgba(17,21,27,.22), 0 3px 10px rgba(17,21,27,.11);
+}
+
+.workspace-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(125deg, rgba(255,255,255,.065), transparent 28%, transparent 72%, rgba(255,255,255,.025));
+}
+.workspace-hero::after { opacity: .22; }
+
+.hero-copy h1 {
+  max-width: 760px;
+  font-size: clamp(34px,3.7vw,58px);
+  font-weight: 760;
+  letter-spacing: -.052em;
+  text-wrap: balance;
+}
+.hero-copy p {
+  max-width: 680px;
+  color: #c0c6ce;
+  font-size: 15px;
+  line-height: 1.72;
+}
+
+.hero-actions button {
+  min-height: 46px;
+  border-radius: 10px;
+  transition:
+    transform var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    background var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
+}
+.hero-actions button:hover:not(:disabled) { transform: translateY(-1px); }
+.hero-actions .hero-run {
+  box-shadow: 0 10px 24px rgba(49,86,200,.22);
+}
+.hero-actions .hero-run:hover:not(:disabled) {
+  box-shadow: 0 13px 30px rgba(49,86,200,.30);
+}
+.hero-actions .quiet-action { opacity: .78; }
+.hero-actions .quiet-action:hover:not(:disabled) { opacity: 1; }
+
+.hero-readout {
+  border-color: rgba(255,255,255,.12);
+  border-radius: 14px;
+  background: rgba(255,255,255,.08);
+  box-shadow: inset 0 1px rgba(255,255,255,.05);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+}
+.hero-readout > span,
+.hero-result {
+  background: rgba(17,22,29,.74);
+  transition: background var(--motion-base) ease;
+}
+.hero-readout > span:hover,
+.hero-result:hover { background: rgba(28,35,45,.82); }
+
+/* Human rhythm: sections breathe, cards stop pretending to be equal. */
+.learning-thread,
+.workspace-stage,
+.playback-dock,
+.inspector-shell {
+  margin-top: var(--section-gap);
+}
+
+.learning-thread {
+  border-color: rgba(129,125,116,.28);
+  background: rgba(255,254,249,.58);
+  box-shadow: inset 0 1px rgba(255,255,255,.62);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.learning-thread b {
+  border-radius: 999px;
+  border-color: rgba(49,86,200,.34);
+  color: var(--accent);
+  background: rgba(255,255,255,.76);
+}
+
+.panel {
+  border-color: rgba(122,118,109,.30);
+  border-radius: 13px;
+  box-shadow: 0 8px 26px rgba(18,21,27,.055), 0 1px 2px rgba(18,21,27,.035);
+  transition:
+    border-color var(--motion-base) ease,
+    box-shadow var(--motion-base) ease,
+    background var(--motion-base) ease;
+}
+
+.panel-heading {
+  min-height: 50px;
+  border-bottom-color: rgba(122,118,109,.22);
+  background: rgba(247,244,237,.82);
+  letter-spacing: .055em;
+}
+
+.setup-rail > .panel:hover,
+.memory-rail > .panel:hover,
+.playback-dock:hover,
+.inspector-shell:hover {
+  border-color: rgba(78,83,94,.38);
+  box-shadow: 0 12px 34px rgba(18,21,27,.075), 0 1px 2px rgba(18,21,27,.04);
+}
+
+.rail-intro {
+  min-height: 46px;
+  padding-inline: 4px;
+}
+.rail-intro > span {
+  border-radius: 999px;
+  box-shadow: 0 5px 14px rgba(18,21,27,.10);
+}
+.rail-intro strong {
+  font-size: 12.5px;
+  font-weight: 720;
+}
+
+/* Machine becomes the premium focal surface. */
+.machine-panel {
+  border-color: rgba(49,86,200,.22);
+  box-shadow: 0 16px 46px rgba(37,52,87,.10), 0 1px 2px rgba(18,21,27,.04);
+}
+
+.machine-canvas {
+  background-color: #f7f6f1;
+  background-image:
+    radial-gradient(circle at 50% 47%, rgba(255,255,255,.92), transparent 42%),
+    linear-gradient(rgba(49,86,200,.052) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(49,86,200,.052) 1px, transparent 1px);
+  background-size: auto, 28px 28px, 28px 28px;
+}
+.machine-canvas::before {
+  inset: 26px;
+  border-color: rgba(49,86,200,.13);
+  border-radius: 12px;
+}
+.machine-canvas svg {
+  transition: filter var(--motion-base) ease;
+}
+.machine-canvas:focus-within svg,
+.machine-canvas:hover svg { filter: saturate(1.035); }
+
+.state {
+  transition:
+    fill var(--motion-base) ease,
+    stroke var(--motion-base) ease,
+    stroke-width var(--motion-base) ease,
+    filter var(--motion-base) ease;
+}
+.state-group { cursor: default; }
+.state-group:hover .state:not(.active) {
+  stroke-width: 2.35;
+  filter: drop-shadow(0 5px 8px rgba(49,86,200,.09));
+}
+
+.edge,
+.edge-label-chip rect,
+.edge-label-chip text {
+  transition: stroke var(--motion-base) ease, fill var(--motion-base) ease, opacity var(--motion-base) ease;
+}
+.transition-group:not(.active) { opacity: .82; transition: opacity var(--motion-base) ease; }
+.machine-canvas:hover .transition-group:not(.active) { opacity: .94; }
+
+.graph-telemetry {
+  border-color: rgba(13,118,111,.24);
+  background: rgba(255,254,249,.78);
+  box-shadow: 0 12px 32px rgba(18,21,27,.09);
+  backdrop-filter: blur(14px) saturate(1.12);
+  -webkit-backdrop-filter: blur(14px) saturate(1.12);
+  transition: transform var(--motion-base) var(--ease-emphasized), box-shadow var(--motion-base) ease;
+}
+.graph-telemetry:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 38px rgba(18,21,27,.12);
+}
+
+/* Inputs feel like tools, not form-builder defaults. */
+.cfg-panel textarea,
+.test-string-field input,
+.speed-control select {
+  transition:
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    background var(--motion-fast) ease;
+}
+.cfg-panel textarea:focus,
+.test-string-field input:focus,
+.speed-control select:focus {
+  box-shadow: inset 3px 0 var(--accent), 0 0 0 3px rgba(49,86,200,.09);
+}
+
+.test-string-field input {
+  border-radius: 10px;
+  background: rgba(255,255,255,.84);
+}
+.input-setup-panel .load-button {
+  min-height: 42px;
+  border-radius: 10px;
+  box-shadow: 0 8px 18px rgba(49,86,200,.16);
+}
+.input-setup-panel .load-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 11px 24px rgba(49,86,200,.22);
+}
+
+.acceptance-control button,
+.inspector-tabs button,
+.controls button {
+  transition:
+    transform var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    background var(--motion-fast) ease,
+    color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
+}
+.acceptance-control button:hover:not(:disabled),
+.inspector-tabs button:hover:not(:disabled),
+.controls button:hover:not(:disabled) { transform: translateY(-1px); }
+
+.stack-cell {
+  border-radius: 9px;
+  box-shadow: 0 4px 12px rgba(18,21,27,.04);
+}
+.stack-cell.top {
+  box-shadow: inset 4px 0 var(--accent), 0 6px 16px rgba(49,86,200,.09);
+}
+
+.configuration-card dl { row-gap: 10px; }
+.semantics-note {
+  border-top-color: rgba(122,118,109,.22);
+  background: linear-gradient(90deg, rgba(49,86,200,.045), transparent 72%);
+}
+
+/* Playback is a confident control strip rather than another generic card. */
+.playback-dock {
+  overflow: clip;
+  border-color: rgba(65,71,82,.30);
+  background: rgba(255,254,249,.83);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.playback-heading {
+  background: linear-gradient(90deg, rgba(18,21,27,.035), transparent 44%);
+}
+.controls .primary-control {
+  border-color: var(--accent);
+  color: #fff;
+  background: var(--accent);
+  box-shadow: 0 7px 16px rgba(49,86,200,.17);
+}
+.controls .primary-control:hover:not(:disabled) {
+  background: var(--accent-2);
+  box-shadow: 0 10px 22px rgba(49,86,200,.22);
+}
+
+/* Inspector has restrained tabs and stronger reading hierarchy. */
+.inspector-shell { scroll-margin-top: 110px; }
+.inspector-tabs {
+  padding: 3px;
+  border: 1px solid rgba(122,118,109,.24);
+  border-radius: 11px;
+  background: rgba(239,236,228,.74);
+}
+.inspector-tabs button {
+  border-color: transparent;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+}
+.inspector-tabs button.selected {
+  border-color: rgba(255,255,255,.88);
+  color: var(--ink);
+  background: rgba(255,255,255,.90);
+  box-shadow: 0 5px 14px rgba(18,21,27,.08);
+}
+
+.trace-list button,
+.challenge-workspace .challenge-list > button,
+.tutorial-card,
+.example-card,
+.production-card {
+  transition:
+    background var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
+}
+
+.tutorial-card:hover,
+.example-card:hover,
+.production-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 13px 30px rgba(18,21,27,.08);
+}
+
+/* Scroll choreography. Progressive enhancement only. */
+@supports (animation-timeline: view()) {
+  .learning-thread,
+  .workspace-stage,
+  .playback-dock,
+  .inspector-shell,
+  .learn-workspace .panel,
+  .examples-workspace .panel,
+  .analysis-workspace .panel,
+  .conversion-workspace .panel,
+  .challenge-workspace .panel,
+  .testbench-workspace .panel {
+    animation-name: sectionReveal;
+    animation-duration: 1ms;
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+    animation-timeline: view();
+    animation-range: entry 5% cover 23%;
+  }
+}
+
+/* Make long lower sections cheaper to render while preserving layout. */
+.inspector-shell,
+.learn-workspace,
+.examples-workspace,
+.challenge-workspace,
+.testbench-workspace {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 720px;
+}
+
+/* Tablet/mobile: keep polish, remove expensive atmosphere where it hurts. */
+@media (max-width: 900px) {
+  body { background-attachment: scroll; }
+  .studio-topbar {
+    top: 0;
+    border-radius: 14px;
+    backdrop-filter: blur(18px) saturate(1.2);
+    -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  }
+  .workspace-hero { border-radius: 16px; }
+  .hero-copy h1 { font-size: clamp(34px,8vw,48px); }
+  .machine-panel { box-shadow: 0 10px 32px rgba(37,52,87,.09); }
+}
+
+@media (max-width: 600px) {
+  :root { --section-gap: 12px; }
+  .app-shell.studio-shell { padding-inline: 9px; }
+  .studio-topbar { background: rgba(255,254,249,.92); }
+  .workspace-hero {
+    margin-top: 14px;
+    border-radius: 14px;
+    box-shadow: 0 15px 44px rgba(17,21,27,.16);
+  }
+  .hero-actions button { min-height: 44px; }
+  .panel { border-radius: 11px; }
+  .graph-telemetry { backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px); }
+  .workspace-stage,
+  .playback-dock,
+  .inspector-shell { animation: none !important; }
+}
+
+/* High-contrast users should get less translucency, more edge definition. */
+@media (prefers-contrast: more) {
+  .studio-topbar,
+  .nav-menu,
+  .learning-thread,
+  .playback-dock,
+  .graph-telemetry {
+    background: var(--surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .panel,
+  .studio-topbar,
+  .workspace-hero { border-width: 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  #stacktrace-content > *,
+  .learning-thread,
+  .workspace-stage,
+  .playback-dock,
+  .inspector-shell,
+  .nav-menu {
+    animation: none !important;
+  }
+  .workspace-hero,
+  .brand-mark,
+  .graph-telemetry,
+  button,
+  .panel,
+  .state,
+  .edge,
+  .stack-cell {
+    transition: none !important;
+  }
+}
+
+@keyframes routeEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes menuEnter {
+  from { opacity: 0; transform: translateY(-6px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes sectionReveal {
+  from { opacity: .18; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
