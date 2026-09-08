@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
+import { cfgToPda } from '../core/cfg/cfgToPda'
 import { parseGrammar } from '../core/cfg/grammarParser'
+import { loadWorkspace, saveWorkspace } from '../core/workspace/persistence'
 
 interface CFGEditorProps {
   value: string
@@ -13,6 +15,30 @@ export function CFGEditor({ value, onChange, onBuild }: CFGEditorProps) {
     catch (error) { return { grammar: null, error: error instanceof Error ? error.message : 'Invalid grammar' } }
   }, [value])
 
+  const buildPda = () => {
+    if (onBuild) {
+      onBuild()
+      return
+    }
+    if (!result.grammar) return
+
+    const current = loadWorkspace()
+    const testInput = document.querySelector<HTMLInputElement>('.test-string-field input')?.value ?? current?.input ?? ''
+    const machine = cfgToPda(result.grammar).machine
+
+    saveWorkspace({
+      grammar: value,
+      input: testInput,
+      acceptanceMode: 'final-state',
+      machine,
+      activeChallengeId: null,
+    })
+
+    const url = new URL(window.location.href)
+    url.searchParams.delete('w')
+    window.location.replace(url.toString())
+  }
+
   return (
     <section className="panel cfg-panel">
       <div className="panel-heading"><label htmlFor="grammar-source">GRAMMAR</label><span>CFG EDITOR</span></div>
@@ -24,12 +50,10 @@ export function CFGEditor({ value, onChange, onBuild }: CFGEditorProps) {
           <span>Terminals: {result.grammar?.terminals.join(', ') || 'None'}</span>
         </>}
       </div>
-      {onBuild && (
-        <div className="grammar-build-row">
-          <span>Grammar text and the current PDA are separate until you build.</span>
-          <button className="grammar-build-button" type="button" disabled={Boolean(result.error)} onClick={onBuild}>Build PDA from CFG →</button>
-        </div>
-      )}
+      <div className="grammar-build-row">
+        <span>Edits change the CFG text first. Build to regenerate the PDA used by Step/Run.</span>
+        <button className="grammar-build-button" type="button" disabled={Boolean(result.error)} onClick={buildPda}>Build PDA from CFG →</button>
+      </div>
     </section>
   )
 }
