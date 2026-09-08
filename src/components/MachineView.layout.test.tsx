@@ -21,23 +21,24 @@ function closeVerticalMachine(): PDA {
   }
 }
 
-describe('MachineView edge layout', () => {
-  it('displaces a short vertical-edge label away from the state nodes', () => {
+describe('MachineView fluid graph', () => {
+  it('renders the machine on canvas instead of SVG', () => {
     const { container } = render(<MachineView machine={closeVerticalMachine()} activeState="q0" />)
-    const chip = container.querySelector('.edge-label-chip')
-    const edge = container.querySelector('.edge')
-
-    expect(chip).toBeTruthy()
-    expect(edge).toBeTruthy()
-    expect(edge?.getAttribute('d')).toContain(' L ')
-
-    const transform = chip?.getAttribute('transform') ?? ''
-    const match = transform.match(/translate\(([-\d.]+)\s+([-\d.]+)\)/)
-    expect(match).toBeTruthy()
-    expect(Math.abs(Number(match?.[1]) - 320)).toBeGreaterThanOrEqual(18)
+    expect(container.querySelector('.fluid-machine-canvas')).toBeTruthy()
+    expect(container.querySelector('svg')).toBeNull()
   })
 
-  it('renders the first pair edge straight and additional pair edges on distinct curves', () => {
+  it('displaces a short vertical-edge label away from the state nodes', () => {
+    const { container } = render(<MachineView machine={closeVerticalMachine()} activeState="q0" />)
+    const chip = container.querySelector<HTMLElement>('.fluid-edge-label[data-transition-id="t0"]')
+
+    expect(chip).toBeTruthy()
+    expect(chip?.getAttribute('data-edge-path')).toContain(' L ')
+    const leftPercent = Number((chip?.style.left ?? '0').replace('%', ''))
+    expect(Math.abs(leftPercent - 50)).toBeGreaterThanOrEqual((18 / 640) * 100)
+  })
+
+  it('keeps the first pair edge straight and fans additional pair edges', () => {
     const machine = closeVerticalMachine()
     machine.states = [
       { id: 'q0', name: 'q0', initial: true, x: 130, y: 140 },
@@ -50,7 +51,8 @@ describe('MachineView edge layout', () => {
     ]
 
     const { container } = render(<MachineView machine={machine} activeState="q0" />)
-    const paths = Array.from(container.querySelectorAll('.edge')).map((path) => path.getAttribute('d') ?? '')
+    const labels = Array.from(container.querySelectorAll<HTMLElement>('.fluid-edge-label'))
+    const paths = labels.map((label) => label.dataset.edgePath ?? '')
 
     expect(paths).toHaveLength(3)
     expect(paths[0]).toContain(' L ')
@@ -59,7 +61,7 @@ describe('MachineView edge layout', () => {
     expect(paths[1]).not.toBe(paths[2])
   })
 
-  it('bundles repeated qWork self-loops into one clean arc with all rules visible', () => {
+  it('bundles repeated qWork self-loops into one visual loop with all rules visible', () => {
     const machine: PDA = {
       startState: 'qInit',
       initialStackSymbol: 'Z',
@@ -79,13 +81,12 @@ describe('MachineView edge layout', () => {
     }
 
     const { container } = render(<MachineView machine={machine} activeState="qWork" activeTransitionId="prod-0" />)
-    const bundle = container.querySelector('.loop-bundle')
+    const bundle = container.querySelector('.fluid-loop-label')
 
     expect(bundle).toBeTruthy()
     expect(bundle?.getAttribute('data-loop-count')).toBe('4')
-    expect(bundle?.querySelectorAll('.edge')).toHaveLength(1)
-    expect(bundle?.querySelectorAll('.edge-label-chip text')).toHaveLength(4)
-    expect(container.querySelectorAll('.edge')).toHaveLength(3)
+    expect(bundle?.querySelectorAll('[data-transition-id]')).toHaveLength(4)
+    expect(container.querySelectorAll('[data-edge-kind="loop"]')).toHaveLength(1)
     expect(bundle?.classList.contains('active')).toBe(true)
   })
 })
