@@ -24,7 +24,7 @@ export function RejectionSummary({ machine, input, mode }: RejectionSummaryProps
   if (analysis.verdict === 'limit') {
     return (
       <div className="global-verdict search-limited">
-        <div><small>WHOLE NPDA SEARCH</small><strong>Inconclusive — execution limit reached.</strong></div>
+        <div><small>WHOLE NPDA SEARCH</small><strong>Inconclusive: execution limit reached.</strong></div>
         <span>{analysis.explored} configurations explored · {analysis.deadBranches} dead · {analysis.limitedBranches} limited. StackTrace does not label this input rejected because the bounded search did not prove that.</span>
         {analysis.closest && <code>closest: ({analysis.closest.state}, {analysis.closest.input.slice(analysis.closest.inputIndex) || 'ε'}, {analysis.closest.stack.join('') || 'ε'})</code>}
       </div>
@@ -33,7 +33,7 @@ export function RejectionSummary({ machine, input, mode }: RejectionSummaryProps
 
   return (
     <div className="global-verdict search-rejected">
-      <div><small>WHOLE NPDA SEARCH</small><strong>Rejected — every explored computation terminates.</strong></div>
+      <div><small>WHOLE NPDA SEARCH</small><strong>Rejected: every explored computation terminates.</strong></div>
       <span>{analysis.explored} configurations explored · {analysis.deadBranches} dead branches · no accepting branch.</span>
       {analysis.closest && <div className="closest-branch">
         <small>CLOSEST BRANCH</small>

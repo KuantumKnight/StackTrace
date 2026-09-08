@@ -58,7 +58,7 @@ export const challenges: ChallengeDefinition[] = [
   {
     id: 'stack-never-grows',
     level: 1,
-    title: 'Memory Leak — In Reverse',
+    title: 'Memory Leak: In Reverse',
     difficulty: 'Easy',
     concept: 'basic stack operation',
     briefing: 'The machine reads the first a but forgets to store it. Valid non-empty strings cannot later match their b symbols because the stack never records the first unit of memory.',
@@ -188,7 +188,7 @@ export const challenges: ChallengeDefinition[] = [
     difficulty: 'Hard',
     concept: 'CFG → PDA conversion bug',
     briefing: 'A generated terminal-matching transition was wired to the wrong input symbol. The stack structure is correct, but the recognizer no longer corresponds to S → aSb | ε.',
-    hint: 'In the pop phase, each A represents an unmatched a and must be discharged by the grammar’s closing terminal b — not by another a.',
+    hint: 'In the pop phase, each A represents an unmatched a and must be discharged by the grammar’s closing terminal b, not by another a.',
     acceptanceMode: 'final-state',
     brokenMachine: wrongTerminalMatch,
     publicTests: [

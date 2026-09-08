@@ -59,7 +59,7 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
     <section className="challenge-workspace">
       <div className="challenge-toolbar">
         <button onClick={onBack}>← Workspace</button>
-        <div><small>REPAIR LAB · LEVELS 1–7</small><strong>Debug the machine, then prove the repair.</strong></div>
+        <div><small>REPAIR LAB / LEVELS 1-7</small><strong>Debug the machine, then prove the repair.</strong></div>
       </div>
 
       <div className="challenge-layout">
@@ -93,10 +93,10 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
           <section className="panel challenge-tests">
             <div className="panel-heading"><span>VALIDATION</span><span>{solved ? 'SOLVED' : isActive ? 'CHECKING CURRENT MACHINE' : 'START TO EDIT'}</span></div>
             <div className="challenge-score challenge-score-four">
-              <div className={isActive && publicPassed ? 'pass' : isActive ? 'fail' : ''}><small>PUBLIC · 40</small><strong>{isActive ? `${publicPassedCount}/${publicResults.length}` : '—'}</strong></div>
-              <div className={isActive && hiddenPassed ? 'pass' : isActive ? 'fail' : ''}><small>HIDDEN · 50</small><strong>{isActive ? `${hiddenPassedCount}/${hiddenResults.length}` : '—'}</strong></div>
-              <div className={isActive && !hintUsed ? 'pass' : isActive ? 'hint-used' : ''}><small>NO-HINT · 10</small><strong>{isActive ? hintUsed ? '0' : '10' : '—'}</strong></div>
-              <div className={solved ? 'pass total-score' : 'total-score'}><small>SCORE</small><strong>{isActive ? `${score}/100` : '—'}</strong></div>
+              <div className={isActive && publicPassed ? 'pass' : isActive ? 'fail' : ''}><small>PUBLIC / 40</small><strong>{isActive ? `${publicPassedCount}/${publicResults.length}` : 'PENDING'}</strong></div>
+              <div className={isActive && hiddenPassed ? 'pass' : isActive ? 'fail' : ''}><small>HIDDEN / 50</small><strong>{isActive ? `${hiddenPassedCount}/${hiddenResults.length}` : 'PENDING'}</strong></div>
+              <div className={isActive && !hintUsed ? 'pass' : isActive ? 'hint-used' : ''}><small>NO HINT / 10</small><strong>{isActive ? hintUsed ? '0' : '10' : 'PENDING'}</strong></div>
+              <div className={solved ? 'pass total-score' : 'total-score'}><small>SCORE</small><strong>{isActive ? `${score}/100` : 'PENDING'}</strong></div>
             </div>
 
             <div className="challenge-result-list">
@@ -106,12 +106,12 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
                   <span>{test.expectation.toUpperCase()}</span>
                   <b>{test.input || 'ε'}</b>
                   <small>{isActive ? result.outcome.toUpperCase() : 'PENDING'}</small>
-                  <i>{isActive ? result.passed ? 'PASS' : 'FAIL' : '—'}</i>
+                  <i>{isActive ? result.passed ? 'PASS' : 'FAIL' : 'PENDING'}</i>
                 </div>
               })}
               {selected.hiddenTests.map((test, index) => (
                 <div key={test.id} className={isActive ? hiddenResults[index]?.passed ? 'pass hidden' : 'fail hidden' : 'hidden'}>
-                  <span>HIDDEN</span><b>••••</b><small>{isActive ? hiddenResults[index]?.outcome.toUpperCase() : 'PENDING'}</small><i>{isActive ? hiddenResults[index]?.passed ? 'PASS' : 'FAIL' : '—'}</i>
+                  <span>HIDDEN</span><b>••••</b><small>{isActive ? hiddenResults[index]?.outcome.toUpperCase() : 'PENDING'}</small><i>{isActive ? hiddenResults[index]?.passed ? 'PASS' : 'FAIL' : 'PENDING'}</i>
                 </div>
               ))}
             </div>

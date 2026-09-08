@@ -59,7 +59,7 @@ describe('StackTrace app integration', () => {
     for (let index = 0; index < 7; index += 1) fireEvent.click(step)
 
     expect(screen.getByText('BRANCH TERMINATED')).toBeTruthy()
-    expect(screen.getByText(/Rejected — every explored computation terminates/)).toBeTruthy()
+    expect(screen.getByText(/Rejected: every explored computation terminates/)).toBeTruthy()
     expect(screen.getByText('CLOSEST BRANCH')).toBeTruthy()
   })
 
