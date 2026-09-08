@@ -25,7 +25,7 @@ export function StackTimeline({ history, activeIndex, onSelect }: StackTimelineP
         <span>STACK HEIGHT</span>
         <span>memory over execution</span>
       </div>
-      <svg className="stack-timeline" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Stack height over execution">
+      <svg className="stack-timeline" viewBox={`0 0 ${width} ${height}`} role="group" aria-label="Stack height over execution">
         {[0, .5, 1].map((ratio) => (
           <line key={ratio} className="timeline-gridline" x1={padX} x2={width - padX} y1={padTop + usableHeight * ratio} y2={padTop + usableHeight * ratio} />
         ))}

@@ -117,7 +117,7 @@ export function ExecutionTree({ machine, input, mode, onSelectPath }: ExecutionT
         </div>
       </div>
       <div className="execution-tree-scroller">
-        <svg viewBox={`0 0 760 ${height}`} className="execution-tree-svg" role="img" aria-label="Nondeterministic PDA execution tree">
+        <svg viewBox={`0 0 760 ${height}`} className="execution-tree-svg" role="group" aria-label="Nondeterministic PDA execution tree">
           {positioned.filter((node) => node.parentId).map((node) => {
             const parent = positioned.find((candidate) => candidate.id === node.parentId)
             if (!parent) return null
@@ -143,7 +143,7 @@ export function ExecutionTree({ machine, input, mode, onSelectPath }: ExecutionT
         </svg>
       </div>
       {selected && (
-        <div className="tree-inspector" aria-live="polite">
+        <div className="tree-inspector" aria-live="polite" tabIndex={0}>
           <span><small>NODE</small><b>{selected.id.toUpperCase()}</b></span>
           <span><small>STATE</small><b>{selected.state}</b></span>
           <span><small>UNREAD</small><b>{selected.unread}</b></span>

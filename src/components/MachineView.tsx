@@ -64,14 +64,14 @@ export function MachineView({ machine, activeState, activeTransitionId }: Machin
     <section className="panel machine-panel">
       <div className="panel-heading machine-heading">
         <div><span>PDA</span><span className="heading-separator">/</span><span>STATE GRAPH</span></div>
-        <div className="machine-tools" aria-label="Graph zoom controls">
+        <div className="machine-tools" role="group" aria-label="Graph zoom controls">
           <button type="button" onClick={() => setZoom((value) => Math.max(.78, value - .12))} aria-label="Zoom out">−</button>
           <button type="button" className="zoom-readout" onClick={() => setZoom(1)}>{Math.round(zoom * 100)}%</button>
           <button type="button" onClick={() => setZoom((value) => Math.min(1.35, value + .12))} aria-label="Zoom in">+</button>
         </div>
       </div>
 
-      <div className="machine-canvas">
+      <div className="machine-canvas" role="region" aria-label="PDA state graph" tabIndex={0}>
         <div className="graph-watermark">LIVE MACHINE</div>
         <svg viewBox="0 0 640 280" role="img" aria-label="Animated PDA state diagram">
           <defs>
