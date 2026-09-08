@@ -4,6 +4,9 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
+import { cfgToPda } from './core/cfg/cfgToPda'
+import { parseGrammar } from './core/cfg/grammarParser'
+import { saveWorkspace } from './core/workspace/persistence'
 
 beforeEach(() => {
   cleanup()
@@ -36,6 +39,21 @@ describe('StackTrace app integration', () => {
     expect(screen.getByRole('toolbar', { name: 'Canvas tools' })).toBeTruthy()
     expect(screen.getByLabelText('Initial stack symbol')).toBeTruthy()
     expect(screen.getByRole('button', { name: /Debug machine/i })).toBeTruthy()
+  })
+
+  it('accepts S -> (S)S | ε with input (()()) through the actual Step UI', () => {
+    const grammar = 'S -> (S)S | ε'
+    const machine = cfgToPda(parseGrammar(grammar)).machine
+    saveWorkspace({ grammar, input: '(()())', acceptanceMode: 'final-state', machine, activeChallengeId: null })
+
+    render(<App />)
+
+    for (let index = 0; index < 24 && !screen.queryByText('STRING ACCEPTED'); index += 1) {
+      fireEvent.click(screen.getByRole('button', { name: 'Step →' }))
+    }
+
+    expect(screen.getByText('STRING ACCEPTED')).toBeTruthy()
+    expect(screen.getByText(/selected acceptance condition is satisfied/i)).toBeTruthy()
   })
 
   it('keeps future configurations when moving Back and Forward', async () => {
