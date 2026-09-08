@@ -288,10 +288,10 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 
 .learning-thread {
   display: grid;
-  grid-template-columns: auto 28px auto 28px auto 28px auto;
+  grid-template-columns: repeat(4, auto);
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 6px;
   margin: 14px 0 0;
   padding: 10px 16px;
   border: 1px solid var(--line);
@@ -301,9 +301,10 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   font-size: 11px;
   font-weight: 700;
 }
-.learning-thread span { display: inline-flex; align-items: center; gap: 7px; }
+.learning-thread button { display: inline-flex; align-items: center; gap: 7px; min-height: 0; padding: 7px 11px; border: 1px solid transparent; border-radius: 8px; background: transparent; box-shadow: none; color: var(--muted); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.learning-thread button:hover:not(:disabled) { border-color: var(--line-strong); color: var(--ink); background: var(--surface); box-shadow: none; }
 .learning-thread b { display: grid; place-items: center; width: 23px; height: 23px; border: 1px solid var(--line-strong); border-radius: 6px; color: var(--accent); background: var(--surface); font-size: 9px; }
-.learning-thread i { color: var(--line-strong); font-style: normal; text-align: center; }
+#section-language, #section-graph, #section-memory, #section-playback { scroll-margin-top: 110px; }
 
 .panel {
   min-width: 0;
@@ -391,7 +392,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 }
 .machine-canvas::before { content: ""; position: absolute; inset: 24px; pointer-events: none; border: 1px dashed rgba(49,86,200,.17); border-radius: 8px; }
 .machine-canvas svg { position: relative; z-index: 2; width: 97%; height: 470px; overflow: visible; }
-.graph-watermark { position: absolute; z-index: 3; top: 17px; left: 17px; color: rgba(49,86,200,.55); font-size: 9px; font-weight: 900; letter-spacing: .14em; }
+
 .edge-hit-area { stroke: transparent; stroke-width: 18; fill: none; }
 .edge { stroke: #8f95a0; stroke-width: 1.8; fill: none; }
 .edge-flow { stroke: var(--signal); stroke-width: 3; stroke-linecap: round; fill: none; stroke-dasharray: 3 10; animation: edgeFlow 650ms linear infinite; filter: drop-shadow(0 2px 2px rgba(13,118,111,.18)); }
@@ -427,7 +428,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .stack-cell small { color: var(--muted); font-size: 7px; font-weight: 850; }
 .stack-rail { position: absolute; top: 18px; bottom: 30px; width: 1px; background: linear-gradient(transparent,#c0c4cb 20%,#c0c4cb 80%,transparent); }
 .stack-rail.left { left: 21%; }.stack-rail.right { right: 21%; }
-.stack-base { position: absolute; bottom: 10px; color: var(--muted); font-size: 7px; font-weight: 850; letter-spacing: .11em; }
+
 .empty-stack { display: grid; place-items: center; gap: 6px; min-height: 100px; color: var(--muted); }
 .empty-stack b { font-size: 22px; }.empty-stack span { font-size: 8px; font-weight: 700; }
 .configuration-card { box-shadow: none; }
@@ -563,7 +564,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .hero-readout { grid-template-columns: repeat(4,minmax(0,1fr)); }
   .hero-result { grid-column: 1 / -1; }
   .learning-thread { grid-template-columns: 1fr 1fr; justify-content: stretch; }
-  .learning-thread i { display: none; }
   .workspace-stage { display: block; }
   .setup-rail, .machine-stage, .memory-rail { display: grid; margin-top: 14px; }
   .memory-rail { grid-template-columns: 1fr 1fr; }

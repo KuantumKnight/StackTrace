@@ -9,7 +9,7 @@ export function InputTape({ input, inputIndex }: InputTapeProps) {
   return (
     <section className="input-tape" aria-label="Input tape">
       <div className="tape-label-row">
-        <span>INPUT TAPE</span>
+        <span>Input</span>
         <span>{Math.min(inputIndex, input.length)} / {input.length} consumed</span>
       </div>
       <div className="tape-track">
@@ -26,7 +26,7 @@ export function InputTape({ input, inputIndex }: InputTapeProps) {
             )
           })}
           {inputIndex >= input.length && input.length > 0 && (
-            <div className="tape-cell end-marker current"><span className="read-head" aria-hidden="true">▼</span><span>ε</span><small>END</small></div>
+            <div className="tape-cell end-marker current"><span className="read-head" aria-hidden="true">▼</span><span>ε</span><small>End</small></div>
           )}
         </div>
       </div>

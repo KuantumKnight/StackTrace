@@ -65,7 +65,7 @@ export function MachineView({ machine, activeState, activeTransitionId }: Machin
   return (
     <section className="panel machine-panel">
       <div className="panel-heading machine-heading">
-        <div><span>PDA</span><span className="heading-separator">/</span><span>STATE GRAPH</span></div>
+        <div><span>State graph</span></div>
         <div className="machine-tools" role="group" aria-label="Graph zoom controls">
           <button type="button" onClick={() => setZoom((value) => Math.max(.78, value - .12))} aria-label="Zoom out">−</button>
           <button type="button" className="zoom-readout" onClick={() => setZoom(1)}>{Math.round(zoom * 100)}%</button>
@@ -74,7 +74,6 @@ export function MachineView({ machine, activeState, activeTransitionId }: Machin
       </div>
 
       <div className="machine-canvas" role="region" aria-label="PDA state graph" tabIndex={0}>
-        <div className="graph-watermark">LIVE MACHINE</div>
         <svg viewBox="0 0 640 280" role="img" aria-label="Animated PDA state diagram">
           <defs>
             <marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto">
@@ -113,7 +112,7 @@ export function MachineView({ machine, activeState, activeTransitionId }: Machin
                   {state.accepting && <circle className="state-inner" r="28" />}
                   <text className="state-label" y="5" textAnchor="middle">{state.name}</text>
                   <text className="state-caption" y="57" textAnchor="middle">
-                    {state.initial ? 'START' : state.accepting ? 'FINAL' : active ? 'CURRENT' : ''}
+                    {state.initial ? 'Start' : state.accepting ? 'Final' : active ? 'Current' : ''}
                   </text>
                 </g>
               )
@@ -124,7 +123,7 @@ export function MachineView({ machine, activeState, activeTransitionId }: Machin
         <div className="graph-telemetry" aria-live="polite">
           <span className="live-dot" />
           <div>
-            <small>ACTIVE TRANSITION</small>
+            <small>Active transition</small>
             <strong>{activeTransition ? transitionLabel(activeTransition) : 'Waiting for step'}</strong>
           </div>
         </div>

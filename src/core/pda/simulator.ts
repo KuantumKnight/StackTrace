@@ -86,5 +86,5 @@ export function describeTransition(transition: PDATransition | undefined) {
   const read = epsilon(transition.input) ? 'ε' : transition.input
   const pop = epsilon(transition.stackTop) ? 'nothing' : transition.stackTop
   const push = epsilon(transition.replacement) ? 'nothing' : transition.replacement
-  return `Read ${read} · pop ${pop} · push ${push}`
+  return `Read ${read}, pop ${pop}, push ${push}`
 }

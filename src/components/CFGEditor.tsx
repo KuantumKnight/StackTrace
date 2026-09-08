@@ -9,7 +9,7 @@ export function CFGEditor({ value, onChange }: { value: string; onChange: (next:
 
   return (
     <section className="panel cfg-panel">
-      <div className="panel-heading"><label htmlFor="grammar-source">GRAMMAR</label><span>CFG EDITOR</span></div>
+      <div className="panel-heading"><label htmlFor="grammar-source">Grammar</label></div>
       <textarea id="grammar-source" value={value} onChange={(event) => onChange(event.target.value)} spellCheck={false} />
       <div className="grammar-meta">
         {result.error ? <span className="danger">{result.error}</span> : <>

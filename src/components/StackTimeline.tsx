@@ -22,8 +22,7 @@ export function StackTimeline({ history, activeIndex, onSelect }: StackTimelineP
   return (
     <section className="stack-timeline-card">
       <div className="mini-heading">
-        <span>STACK HEIGHT</span>
-        <span>memory over execution</span>
+        <span>Stack height</span>
       </div>
       <svg className="stack-timeline" viewBox={`0 0 ${width} ${height}`} role="group" aria-label="Stack height over execution">
         {[0, .5, 1].map((ratio) => (

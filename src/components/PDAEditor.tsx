@@ -178,31 +178,30 @@ export function PDAEditor({ machine, onChange, onBack }: PDAEditorProps) {
       <header className="builder-header">
         <div className="builder-kicker">
           <button className="builder-back" onClick={onBack}>← Debugger</button>
-          <span>BUILD / PDA WORKBENCH</span>
+          <span>PDA workbench</span>
         </div>
 
         <div className="builder-hero-row">
           <div className="builder-title-block">
-            <small>GRAPH AUTHORING</small>
             <h1>Shape the machine. <em>Then prove it.</em></h1>
-            <p>Drag states, author transitions, validate structure, and hand the exact machine straight back to the debugger.</p>
+            <p>Draw states and transitions, then debug them.</p>
           </div>
 
           <div className="builder-primary-actions">
             <label className="bottom-symbol-control">
-              <small>INITIAL STACK</small>
+              <small>Initial stack</small>
               <input aria-label="Initial stack symbol" value={machine.initialStackSymbol} maxLength={1} onChange={(event) => onChange({ ...machine, initialStackSymbol: event.target.value || 'Z' })} />
             </label>
-            <button className="debug-machine-button" onClick={onBack}>Debug machine <span>→</span></button>
+            <button className="debug-machine-button" onClick={onBack}>Debug machine</button>
           </div>
         </div>
 
         <div className="builder-metrics" aria-label="Machine summary">
-          <span><small>STATES</small><strong>{machine.states.length}</strong></span>
-          <span><small>TRANSITIONS</small><strong>{machine.transitions.length}</strong></span>
-          <span><small>ACCEPTING</small><strong>{acceptingCount}</strong></span>
+          <span><small>States</small><strong>{machine.states.length}</strong></span>
+          <span><small>Transitions</small><strong>{machine.transitions.length}</strong></span>
+          <span><small>Accepting</small><strong>{acceptingCount}</strong></span>
           <span className={errorCount ? 'metric-danger' : warningCount ? 'metric-warning' : 'metric-ok'}>
-            <small>MACHINE HEALTH</small>
+            <small>Health</small>
             <strong>{errorCount ? `${errorCount} error${errorCount === 1 ? '' : 's'}` : warningCount ? `${warningCount} warning${warningCount === 1 ? '' : 's'}` : 'Valid'}</strong>
           </span>
         </div>
@@ -211,11 +210,11 @@ export function PDAEditor({ machine, onChange, onBack }: PDAEditorProps) {
       <div className="designer-grid">
         <aside className="panel machine-objects-panel">
           <div className="builder-panel-title">
-            <div><small>01 · OBJECTS</small><strong>Machine map</strong></div>
-            <span>{machine.states.length + machine.transitions.length} objects</span>
+            <div><strong>Machine map</strong></div>
+            <span>{machine.states.length + machine.transitions.length} items</span>
           </div>
 
-          <div className="object-section-heading"><span>STATES</span><button onClick={addState}>+ State <kbd>A</kbd></button></div>
+          <div className="object-section-heading"><span>States</span><button onClick={addState}>+ State <kbd>A</kbd></button></div>
           <div className="state-object-list">
             {machine.states.map((state, index) => (
               <button key={state.id} className={selectedState?.id === state.id && !selectedTransition ? 'selected' : ''} onClick={() => { setSelectedStateId(state.id); setSelectedTransitionId(null) }}>
@@ -226,7 +225,7 @@ export function PDAEditor({ machine, onChange, onBack }: PDAEditorProps) {
             ))}
           </div>
 
-          <div className="object-section-heading"><span>TRANSITIONS</span><button onClick={addTransition} disabled={!machine.states.length}>+ Edge <kbd>E</kbd></button></div>
+          <div className="object-section-heading"><span>Transitions</span><button onClick={addTransition} disabled={!machine.states.length}>+ Edge <kbd>E</kbd></button></div>
           <div className="transition-object-list">
             {machine.transitions.map((transition) => (
               <button key={transition.id} className={selectedTransition?.id === transition.id ? 'selected' : ''} onClick={() => { setSelectedTransitionId(transition.id); setSelectedStateId(transition.from) }}>
@@ -240,8 +239,8 @@ export function PDAEditor({ machine, onChange, onBack }: PDAEditorProps) {
 
         <section className="panel designer-canvas-panel">
           <div className="builder-panel-title canvas-title-row">
-            <div><small>02 · CANVAS</small><strong>Machine topology</strong></div>
-            <span>Drag to compose · {snapToGrid ? `${GRID}px snap` : 'free placement'}</span>
+            <div><strong>Canvas</strong></div>
+            <span>Drag to move</span>
           </div>
 
           <div className="designer-canvas">
@@ -287,7 +286,7 @@ export function PDAEditor({ machine, onChange, onBack }: PDAEditorProps) {
                     <circle className="state-body" r="34" filter="url(#editor-node-shadow)" />
                     {state.accepting && <circle className="accepting-ring" r="27" />}
                     <text textAnchor="middle" y="4">{state.name}</text>
-                    <text className="designer-state-role" textAnchor="middle" y="53">{state.id === machine.startState ? 'START' : state.accepting ? 'FINAL' : ''}</text>
+                    <text className="designer-state-role" textAnchor="middle" y="53">{state.id === machine.startState ? 'Start' : state.accepting ? 'Final' : ''}</text>
                   </g>
                 )
               })}
@@ -295,47 +294,47 @@ export function PDAEditor({ machine, onChange, onBack }: PDAEditorProps) {
 
             <div className="canvas-status-bar">
               <span><i className={snapToGrid ? 'status-dot on' : 'status-dot'} />{snapToGrid ? 'Snap enabled' : 'Free placement'}</span>
-              <span>Arrow keys nudge · Shift = ×2 · Delete removes selection</span>
+              <span>Arrow keys move, Shift doubles, Delete removes</span>
             </div>
           </div>
         </section>
 
         <aside className="panel property-panel">
           <div className="builder-panel-title">
-            <div><small>03 · INSPECTOR</small><strong>{selectedTransition ? 'Transition' : selectedState ? 'State' : 'Nothing selected'}</strong></div>
+            <div><strong>{selectedTransition ? 'Transition' : selectedState ? 'State' : 'Nothing selected'}</strong></div>
             <span>{selectedTransition ? selectedTransition.id : selectedState?.id ?? '—'}</span>
           </div>
 
           {selectedTransition ? (
             <div className="transition-properties">
-              <div className="inspector-context"><small>FORMAL RULE</small><strong>{label(selectedTransition)}</strong><span>{selectedTransition.from} → {selectedTransition.to}</span></div>
+              <div className="inspector-context"><small>Rule</small><strong>{label(selectedTransition)}</strong><span>{selectedTransition.from} → {selectedTransition.to}</span></div>
               <div className="property-grid two-up">
-                <label><span>FROM</span><select value={selectedTransition.from} onChange={(event) => patchTransition(selectedTransition.id, { from: event.target.value })}>{machine.states.map((state) => <option key={state.id}>{state.id}</option>)}</select></label>
-                <label><span>TO</span><select value={selectedTransition.to} onChange={(event) => patchTransition(selectedTransition.id, { to: event.target.value })}>{machine.states.map((state) => <option key={state.id}>{state.id}</option>)}</select></label>
+                <label><span>From</span><select value={selectedTransition.from} onChange={(event) => patchTransition(selectedTransition.id, { from: event.target.value })}>{machine.states.map((state) => <option key={state.id}>{state.id}</option>)}</select></label>
+                <label><span>To</span><select value={selectedTransition.to} onChange={(event) => patchTransition(selectedTransition.id, { to: event.target.value })}>{machine.states.map((state) => <option key={state.id}>{state.id}</option>)}</select></label>
               </div>
               <div className="property-grid">
-                <label><span>READ INPUT</span><input value={selectedTransition.input || 'ε'} onBlur={(event) => patchTransition(selectedTransition.id, { input: normalizeSymbol(event.target.value) })} onChange={(event) => patchTransition(selectedTransition.id, { input: event.target.value })} /></label>
-                <label><span>STACK TOP</span><input value={selectedTransition.stackTop || 'ε'} onBlur={(event) => patchTransition(selectedTransition.id, { stackTop: normalizeSymbol(event.target.value) })} onChange={(event) => patchTransition(selectedTransition.id, { stackTop: event.target.value })} /></label>
-                <label><span>REPLACE WITH</span><input value={selectedTransition.replacement} onBlur={(event) => patchTransition(selectedTransition.id, { replacement: normalizeSymbol(event.target.value) })} onChange={(event) => patchTransition(selectedTransition.id, { replacement: event.target.value })} /></label>
+                <label><span>Read input</span><input value={selectedTransition.input || 'ε'} onBlur={(event) => patchTransition(selectedTransition.id, { input: normalizeSymbol(event.target.value) })} onChange={(event) => patchTransition(selectedTransition.id, { input: event.target.value })} /></label>
+                <label><span>Stack top</span><input value={selectedTransition.stackTop || 'ε'} onBlur={(event) => patchTransition(selectedTransition.id, { stackTop: normalizeSymbol(event.target.value) })} onChange={(event) => patchTransition(selectedTransition.id, { stackTop: event.target.value })} /></label>
+                <label><span>Replace with</span><input value={selectedTransition.replacement} onBlur={(event) => patchTransition(selectedTransition.id, { replacement: normalizeSymbol(event.target.value) })} onChange={(event) => patchTransition(selectedTransition.id, { replacement: event.target.value })} /></label>
               </div>
-              <div className="transition-preview"><small>READ · POP · PUSH</small><strong>{label(selectedTransition)}</strong></div>
+              <div className="transition-preview"><small>Read, pop, push</small><strong>{label(selectedTransition)}</strong></div>
               <button className="danger-button" onClick={deleteTransition}>Delete transition <kbd>Del</kbd></button>
             </div>
           ) : selectedState ? (
             <div className="state-properties">
-              <div className="state-property-hero"><small>SELECTED STATE</small><strong>{selectedState.name}</strong><span>x {Math.round(selectedState.x)} · y {Math.round(selectedState.y)}</span></div>
+              <div className="state-property-hero"><small>State</small><strong>{selectedState.name}</strong><span>x {Math.round(selectedState.x)}, y {Math.round(selectedState.y)}</span></div>
               <div className="state-role-actions">
                 <button className={selectedState.id === machine.startState ? 'selected-setting' : ''} onClick={setStart}><span className="setting-indicator" />{selectedState.id === machine.startState ? 'Start state' : 'Set as start'}</button>
                 <button className={selectedState.accepting ? 'selected-setting' : ''} onClick={() => patchState(selectedState.id, { accepting: !selectedState.accepting })}><span className="setting-indicator" />{selectedState.accepting ? 'Accepting state' : 'Mark accepting'}</button>
               </div>
-              <div className="nudge-controls" aria-label="Move selected state"><span>NUDGE POSITION</span><div><button aria-label="Move up" onClick={() => nudge(0, -GRID)}>↑</button><button aria-label="Move left" onClick={() => nudge(-GRID, 0)}>←</button><button aria-label="Move right" onClick={() => nudge(GRID, 0)}>→</button><button aria-label="Move down" onClick={() => nudge(0, GRID)}>↓</button></div><small>Arrow keys work anywhere outside an input.</small></div>
+              <div className="nudge-controls" aria-label="Move selected state"><span>Position</span><div><button aria-label="Move up" onClick={() => nudge(0, -GRID)}>↑</button><button aria-label="Move left" onClick={() => nudge(-GRID, 0)}>←</button><button aria-label="Move right" onClick={() => nudge(GRID, 0)}>→</button><button aria-label="Move down" onClick={() => nudge(0, GRID)}>↓</button></div><small>Arrow keys work anywhere outside an input.</small></div>
               <button className="danger-button" disabled={machine.states.length <= 1} onClick={deleteState}>Delete state <kbd>Del</kbd></button>
             </div>
-          ) : <div className="property-empty"><b>Select an object</b><span>Choose a state or transition to edit its formal properties.</span></div>}
+          ) : <div className="property-empty"><b>Select an object</b><span>Select a state or transition to edit.</span></div>}
 
           <div className="designer-diagnostics">
-            <div className="diagnostic-heading"><small>MACHINE DIAGNOSTICS</small><span>{diagnostics.length || '0'}</span></div>
-            {diagnostics.length ? diagnostics.map((item, index) => <span key={`${item.message}-${index}`} className={item.level}><i />{item.message}</span>) : <span className="ok"><i />Machine structure is valid and ready to debug.</span>}
+            <div className="diagnostic-heading"><small>Checks</small><span>{diagnostics.length || '0'}</span></div>
+            {diagnostics.length ? diagnostics.map((item, index) => <span key={`${item.message}-${index}`} className={item.level}><i />{item.message}</span>) : <span className="ok"><i />Valid machine.</span>}
           </div>
         </aside>
       </div>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { acceptanceName, cap, outcomeLabel } from '../content'
 import { runLanguageTests } from '../core/pda/testBench'
 import type { AcceptanceMode, PDA } from '../core/pda/types'
 import { challenges } from '../data/challenges'
@@ -59,63 +60,63 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
     <section className="challenge-workspace">
       <div className="challenge-toolbar">
         <button onClick={onBack}>← Workspace</button>
-        <div><small>REPAIR LAB / LEVELS 1-7</small><strong>Debug the machine, then prove the repair.</strong></div>
+        <div><strong>Repair lab</strong></div>
       </div>
 
       <div className="challenge-layout">
         <aside className="panel challenge-list">
-          <div className="panel-heading"><span>CHALLENGES</span><span>{challenges.length} LEVELS</span></div>
+          <div className="panel-heading"><span>Challenges</span><span>{challenges.length} levels</span></div>
           {challenges.map((challenge) => (
             <button key={challenge.id} className={challenge.id === selected.id ? 'selected' : ''} onClick={() => selectChallenge(challenge.id)}>
-              <span><b><em>L{challenge.level}</em>{challenge.title}</b><small>{challenge.concept}</small></span>
-              <i>{challenge.id === activeChallengeId ? 'ACTIVE' : challenge.difficulty}</i>
+              <span><b><em>L{challenge.level}</em>{challenge.title}</b><small>{cap(challenge.concept)}</small></span>
+              <i>{challenge.id === activeChallengeId ? 'Active' : challenge.difficulty}</i>
             </button>
           ))}
         </aside>
 
         <div className="challenge-main">
           <section className="panel challenge-briefing">
-            <div className="panel-heading"><div><span>LEVEL {selected.level}</span><span className="heading-separator">/</span><span>{selected.title.toUpperCase()}</span><span className="heading-separator">/</span><span>{selected.difficulty.toUpperCase()}</span></div><span>{isActive ? 'ACTIVE' : 'NOT STARTED'}</span></div>
-            <div className="challenge-copy"><small>MISSION · {selected.concept.toUpperCase()}</small><p>{selected.briefing}</p></div>
+            <div className="panel-heading"><div><span>Level {selected.level}</span><span className="heading-separator">/</span><span>{selected.title}</span></div><span>{isActive ? 'Active' : 'Not started'}</span></div>
+            <div className="challenge-copy"><p>{selected.briefing}</p></div>
             <div className="challenge-mode-note">
-              <small>VALIDATION CONVENTION</small>
-              <strong>{challengeMode === 'final-state' ? 'Final state' : 'Empty stack'}</strong>
-              {mode !== challengeMode && <span>Main debugger is currently set to {mode === 'final-state' ? 'final state' : 'empty stack'}; challenge scoring still uses the required convention.</span>}
+              <small>Checks with</small>
+              <strong>{acceptanceName(challengeMode)}</strong>
+              {mode !== challengeMode && <span>Debugger uses {acceptanceName(mode)}; scoring uses {acceptanceName(challengeMode)}.</span>}
             </div>
             <div className="challenge-actions">
               <button className="primary-control" onClick={startChallenge}>{isActive ? 'Restart broken machine' : 'Start challenge'}</button>
-              <button disabled={!isActive} onClick={onOpenDesigner}>Open Designer</button>
+              <button disabled={!isActive} onClick={onOpenDesigner}>Open builder</button>
               <button onClick={toggleHint}>{showHint ? 'Hide hint' : 'Show hint'}</button>
             </div>
-            {showHint && <div className="challenge-hint"><small>HINT · NO-HINT BONUS FORFEITED</small><span>{selected.hint}</span></div>}
+            {showHint && <div className="challenge-hint"><small>Hint</small><span>{selected.hint}</span></div>}
           </section>
 
           <section className="panel challenge-tests">
-            <div className="panel-heading"><span>VALIDATION</span><span>{solved ? 'SOLVED' : isActive ? 'CHECKING CURRENT MACHINE' : 'START TO EDIT'}</span></div>
+            <div className="panel-heading"><span>Validation</span><span>{solved ? 'Solved' : isActive ? 'Checking' : 'Not started'}</span></div>
             <div className="challenge-score challenge-score-four">
-              <div className={isActive && publicPassed ? 'pass' : isActive ? 'fail' : ''}><small>PUBLIC / 40</small><strong>{isActive ? `${publicPassedCount}/${publicResults.length}` : 'PENDING'}</strong></div>
-              <div className={isActive && hiddenPassed ? 'pass' : isActive ? 'fail' : ''}><small>HIDDEN / 50</small><strong>{isActive ? `${hiddenPassedCount}/${hiddenResults.length}` : 'PENDING'}</strong></div>
-              <div className={isActive && !hintUsed ? 'pass' : isActive ? 'hint-used' : ''}><small>NO HINT / 10</small><strong>{isActive ? hintUsed ? '0' : '10' : 'PENDING'}</strong></div>
-              <div className={solved ? 'pass total-score' : 'total-score'}><small>SCORE</small><strong>{isActive ? `${score}/100` : 'PENDING'}</strong></div>
+              <div className={isActive && publicPassed ? 'pass' : isActive ? 'fail' : ''}><small>Public / 40</small><strong>{isActive ? `${publicPassedCount}/${publicResults.length}` : 'Waiting'}</strong></div>
+              <div className={isActive && hiddenPassed ? 'pass' : isActive ? 'fail' : ''}><small>Hidden / 50</small><strong>{isActive ? `${hiddenPassedCount}/${hiddenResults.length}` : 'Waiting'}</strong></div>
+              <div className={isActive && !hintUsed ? 'pass' : isActive ? 'hint-used' : ''}><small>No hint / 10</small><strong>{isActive ? hintUsed ? '0' : '10' : 'Waiting'}</strong></div>
+              <div className={solved ? 'pass total-score' : 'total-score'}><small>Score</small><strong>{isActive ? `${score}/100` : 'Waiting'}</strong></div>
             </div>
 
             <div className="challenge-result-list">
               {selected.publicTests.map((test, index) => {
                 const result = publicResults[index]
                 return <div key={test.id} className={isActive ? result.passed ? 'pass' : 'fail' : ''}>
-                  <span>{test.expectation.toUpperCase()}</span>
+                  <span>{cap(test.expectation)}</span>
                   <b>{test.input || 'ε'}</b>
-                  <small>{isActive ? result.outcome.toUpperCase() : 'PENDING'}</small>
-                  <i>{isActive ? result.passed ? 'PASS' : 'FAIL' : 'PENDING'}</i>
+                  <small>{isActive ? outcomeLabel(result.outcome) : 'Waiting'}</small>
+                  <i>{isActive ? result.passed ? 'Pass' : 'Fail' : 'Waiting'}</i>
                 </div>
               })}
               {selected.hiddenTests.map((test, index) => (
                 <div key={test.id} className={isActive ? hiddenResults[index]?.passed ? 'pass hidden' : 'fail hidden' : 'hidden'}>
-                  <span>HIDDEN</span><b>••••</b><small>{isActive ? hiddenResults[index]?.outcome.toUpperCase() : 'PENDING'}</small><i>{isActive ? hiddenResults[index]?.passed ? 'PASS' : 'FAIL' : 'PENDING'}</i>
+                  <span>Hidden</span><b>••••</b><small>{isActive ? hiddenResults[index]?.outcome ? outcomeLabel(hiddenResults[index].outcome) : 'Waiting' : 'Waiting'}</small><i>{isActive ? hiddenResults[index]?.passed ? 'Pass' : 'Fail' : 'Waiting'}</i>
                 </div>
               ))}
             </div>
-            {solved && <div className="challenge-solved"><span>✓</span><div><strong>Level {selected.level} repair verified · {score}/100.</strong><small>All public and hidden assertions pass using {challengeMode === 'final-state' ? 'final-state' : 'empty-stack'} acceptance.</small></div></div>}
+            {solved && <div className="challenge-solved"><span>✓</span><div><strong>Level {selected.level} repaired: {score}/100.</strong><small>All public and hidden tests pass ({acceptanceName(challengeMode)}).</small></div></div>}
           </section>
         </div>
       </div>

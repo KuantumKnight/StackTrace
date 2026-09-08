@@ -1,5 +1,6 @@
 import type { Configuration, PDA } from '../core/pda/types'
 import { describeTransition } from '../core/pda/simulator'
+import { cap } from '../content'
 
 interface ExecutionTraceProps {
   machine: PDA
@@ -12,10 +13,10 @@ export function ExecutionTrace({ machine, history, activeIndex, onSelect }: Exec
   return (
     <section className="panel trace-panel">
       <div className="panel-heading">
-        <div><span>EXECUTION TRACE</span><span className="heading-separator">/</span><span>TIME TRAVEL</span></div>
-        <span>{history.length} configurations</span>
+        <span>Trace history</span>
+        <span>{history.length} steps</span>
       </div>
-      <div className="trace-columns" aria-hidden="true"><span>ID</span><span>STATE</span><span>UNREAD</span><span>STACK</span><span>OPERATION</span><span>STATUS</span></div>
+      <div className="trace-columns" aria-hidden="true"><span>ID</span><span>State</span><span>Unread</span><span>Stack</span><span>Operation</span><span>Status</span></div>
       <div className="trace-list">
         {history.map((config, index) => {
           const transition = machine.transitions.find((item) => item.id === config.transitionId)
@@ -26,7 +27,7 @@ export function ExecutionTrace({ machine, history, activeIndex, onSelect }: Exec
               <span className="trace-mono">{config.input.slice(config.inputIndex) || 'ε'}</span>
               <span className="trace-mono">{config.stack.join('') || 'ε'}</span>
               <span className="trace-operation">{describeTransition(transition)}</span>
-              <i className={config.status}>{config.status}</i>
+              <i className={config.status}>{cap(config.status)}</i>
             </button>
           )
         })}

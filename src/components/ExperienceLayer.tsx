@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { footerCopy, paletteCopy } from '../content'
 import { ArrowUpIcon, CommandIcon, LayersIcon, MoonIcon, SearchIcon, SunIcon } from './LucideIcons'
 
 type Theme = 'paper' | 'glass' | 'night'
@@ -175,7 +176,7 @@ export function ExperienceLayer() {
           <section className="command-palette" role="dialog" aria-modal="true" aria-label="Command palette">
             <div className="command-search">
               <SearchIcon />
-              <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Jump to a StackTrace tool…" aria-label="Search commands" />
+              <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder={paletteCopy.placeholder} aria-label="Search commands" />
               <kbd>ESC</kbd>
             </div>
             <div className="command-list">
@@ -184,9 +185,9 @@ export function ExperienceLayer() {
                   <span>{command.label}</span><kbd>{command.hint}</kbd>
                 </button>
               ))}
-              {!filteredCommands.length && <p>No matching command.</p>}
+              {!filteredCommands.length && <p>{paletteCopy.empty}</p>}
             </div>
-            <footer><span>StackTrace command center</span><span>Ctrl/⌘ K anywhere</span></footer>
+            <footer><span>{paletteCopy.footerNote}</span><span>{paletteCopy.shortcut}</span></footer>
           </section>
         </div>
       )}
@@ -194,14 +195,13 @@ export function ExperienceLayer() {
       <footer className="global-footer">
         <div>
           <strong>StackTrace</strong>
-          <span>CFG + PDA visual debugger</span>
+          <span>{footerCopy.tagline}</span>
         </div>
         <nav aria-label="Footer links">
           <button type="button" onClick={() => document.querySelector<HTMLElement>('nav button:nth-child(2)')?.click()}>Learn</button>
           <button type="button" onClick={() => document.querySelector<HTMLElement>('nav button:nth-child(3)')?.click()}>Build</button>
           <button type="button" onClick={() => document.querySelector<HTMLElement>('nav button:nth-child(4)')?.click()}>Practice</button>
         </nav>
-        <span className="footer-note">Built for understanding formal languages, not hiding them.</span>
       </footer>
     </>
   )

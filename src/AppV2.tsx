@@ -31,6 +31,7 @@ import {
 import { describeTransition, initialConfiguration, matchingTransitions, nextConfigurations } from './core/pda/simulator'
 import type { AcceptanceMode, Configuration, PDA } from './core/pda/types'
 import { loadWorkspace, readWorkspaceFromUrl, saveWorkspace, type WorkspaceSnapshot } from './core/workspace/persistence'
+import { acceptanceName, configStatusLabel, guideSteps, heroCopy, playbackCopy, railCopy } from './content'
 import { anbnMachine } from './data/sampleMachine'
 import './styles/app.css'
 import './styles/studio-v2.css'
@@ -48,11 +49,8 @@ type AppView = 'workspace' | 'derivations' | 'analysis' | 'conversion' | 'design
 type LearnTarget = 'derivations' | 'analysis' | 'conversion' | 'designer' | 'tests' | 'challenges' | 'examples'
 type InspectorView = 'trace' | 'tree' | 'timeline'
 
-function statusLabel(status: Configuration['status']) {
-  if (status === 'accepted') return 'ACCEPTED'
-  if (status === 'dead') return 'BRANCH DEAD'
-  if (status === 'limit') return 'SEARCH LIMIT'
-  return 'READY'
+function scrollToSection(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 export default function AppV2() {
@@ -266,12 +264,12 @@ export default function AppV2() {
   }
 
   const resultText = current.status === 'accepted'
-    ? 'Accepted: the selected acceptance condition is satisfied.'
+    ? `Accepted at step ${activeIndex}.`
     : current.status === 'dead'
-      ? current.reason || 'This computation branch has no legal next move.'
+      ? current.reason || 'No legal next move.'
       : current.status === 'limit'
-        ? current.reason || 'Search stopped at the configured safety limit.'
-        : `${availableTransitions.length} valid move${availableTransitions.length === 1 ? '' : 's'} from this configuration.`
+        ? current.reason || 'Hit a search limit.'
+        : `${availableTransitions.length} valid move${availableTransitions.length === 1 ? '' : 's'} from here.`
 
   const runAvailable = current.status === 'active' || canMoveForward(debugHistory)
 
@@ -314,7 +312,7 @@ export default function AppV2() {
         </div>
 
         {view === 'workspace' ? (
-          <div className={`status-badge ${current.status}`}><span className="status-light" />{statusLabel(current.status)}</div>
+          <div className={`status-badge ${current.status}`}><span className="status-light" />{configStatusLabel(current.status)}</div>
         ) : (
           <button className="return-debugger" onClick={() => setView('workspace')}>Back to debugger</button>
         )}
@@ -351,68 +349,65 @@ export default function AppV2() {
           <>
             <section className="workspace-hero" aria-live="polite">
               <div className="hero-copy">
-                <div className="eyebrow"><span className={`pulse ${running ? 'running' : ''}`} />LIVE TRACE · aⁿbⁿ</div>
-                <h1>See exactly why a PDA accepts a string.</h1>
-                <p>For the sample grammar, every <code>a</code> stores work on the stack and every <code>b</code> removes it. Step through the machine and watch the proof happen.</p>
+                <div className="eyebrow"><span className={`pulse ${running ? 'running' : ''}`} />{heroCopy.eyebrow}</div>
+                <h1>{heroCopy.title}</h1>
+                <p>Push A for every <code>a</code>, pop for every <code>b</code>. Step through aⁿbⁿ and see the stack prove it.</p>
                 <div className="hero-actions">
                   <button className="hero-run" onClick={() => setRunning((value) => !value)} disabled={!runAvailable}>{running ? 'Pause trace' : 'Run trace'}</button>
-                  <button onClick={step} disabled={!runAvailable}>Step once →</button>
-                  <button className="quiet-action" onClick={() => setView('learn')}>Explain the concept</button>
+                  <button onClick={step} disabled={!runAvailable}>Step once</button>
                 </div>
               </div>
               <div className="hero-readout" aria-label="Current PDA configuration summary">
-                <span><small>STATE</small><strong>{current.state}</strong></span>
-                <span><small>UNREAD INPUT</small><strong>{unread}</strong></span>
-                <span><small>STACK DEPTH</small><strong>{current.stack.length}</strong></span>
-                <span><small>VALID MOVES</small><strong>{availableTransitions.length}</strong></span>
-                <div className="hero-result"><small>NOW</small><strong>{resultText}</strong></div>
+                <span><small>State</small><strong>{current.state}</strong></span>
+                <span><small>Unread input</small><strong>{unread}</strong></span>
+                <span><small>Stack depth</small><strong>{current.stack.length}</strong></span>
+                <span><small>Valid moves</small><strong>{availableTransitions.length}</strong></span>
+                <div className="hero-result"><small>Now</small><strong>{resultText}</strong></div>
               </div>
             </section>
 
-            <section className="learning-thread" aria-label="Debugger learning sequence">
-              <span><b>01</b> Define the language</span>
-              <i aria-hidden="true">→</i>
-              <span><b>02</b> Trace the state graph</span>
-              <i aria-hidden="true">→</i>
-              <span><b>03</b> Watch stack memory</span>
-              <i aria-hidden="true">→</i>
-              <span><b>04</b> Explain the outcome</span>
-            </section>
+            <nav className="learning-thread" aria-label="Debugger sections">
+              {guideSteps.map((guideStep) => (
+                <button key={guideStep.id} type="button" onClick={() => scrollToSection(guideStep.target)}>
+                  <b>{guideStep.id}</b> {guideStep.label}
+                </button>
+              ))}
+            </nav>
 
             <div className="workspace-stage">
-              <aside className="setup-rail">
-                <div className="rail-intro"><span>01</span><div><small>LANGUAGE</small><strong>Define what should be recognized.</strong></div></div>
+              <aside className="setup-rail" id="section-language">
+                <div className="rail-intro"><span>01</span><div><strong>{railCopy.language}</strong></div></div>
                 <CFGEditor value={grammar} onChange={setGrammar} />
 
                 <section className="panel input-setup-panel">
-                  <div className="panel-heading"><div><span>INPUT</span><span className="heading-separator">/</span><span>ACCEPTANCE</span></div><span>TRY A STRING</span></div>
+                  <div className="panel-heading"><span>Input</span></div>
                   <label className="test-string-field">
-                    <span>TEST STRING</span>
+                    <span>Test string</span>
                     <input value={input} onChange={(event) => setInput(event.target.value.replace(/\s/g, ''))} onKeyDown={(event) => event.key === 'Enter' && reset(input)} spellCheck={false} />
                   </label>
                   <button className="load-button" onClick={() => reset(input)}>Load input</button>
                   <div className="acceptance-control" role="group" aria-label="PDA acceptance mode">
-                    <span>ACCEPT BY</span>
+                    <span>Accept by</span>
                     <button aria-pressed={acceptanceMode === 'final-state'} className={acceptanceMode === 'final-state' ? 'selected' : ''} onClick={() => updateMode('final-state')}>Final state</button>
                     <button aria-pressed={acceptanceMode === 'empty-stack'} className={acceptanceMode === 'empty-stack' ? 'selected' : ''} onClick={() => updateMode('empty-stack')}>Empty stack</button>
                   </div>
                 </section>
               </aside>
 
-              <section className="machine-stage">
-                <div className="rail-intro machine-intro"><span>02</span><div><small>STATE GRAPH</small><strong>Follow the active transition.</strong></div></div>
+              <section className="machine-stage" id="section-graph">
+                <div className="rail-intro machine-intro"><span>02</span><div><strong>{railCopy.graph}</strong></div></div>
                 <MachineView machine={machine} activeState={current.state} activeTransitionId={current.transitionId} />
               </section>
 
-              <aside className="memory-rail">
-                <div className="rail-intro"><span>03</span><div><small>MEMORY</small><strong>Watch the stack explain context.</strong></div></div>
+              <aside className="memory-rail" id="section-memory">
+                <div className="rail-intro"><span>03</span><div><strong>{railCopy.memory}</strong></div></div>
                 <StackView stack={current.stack} previousStack={previous.stack} />
 
                 <section className="panel configuration-card">
-                  <div className="panel-heading"><div><span>CONFIGURATION</span><span className="heading-separator">/</span><span>C{activeIndex}</span></div><span>{acceptanceMode === 'final-state' ? 'FINAL STATE' : 'EMPTY STACK'}</span></div>
+                  <div className="panel-heading"><div><span>Configuration</span><span className="heading-separator">/</span><span>C{activeIndex}</span></div><span>{acceptanceName(acceptanceMode)}</span></div>
                   <div className="configuration-focus">
-                    <span><small>CURRENT STATE</small><strong>{current.state}</strong></span>
-                    <span><small>INPUT HEAD</small><strong>{current.input[current.inputIndex] ?? 'ε'}</strong></span>
+                    <span><small>Current state</small><strong>{current.state}</strong></span>
+                    <span><small>Input head</small><strong>{current.input[current.inputIndex] ?? 'ε'}</strong></span>
                   </div>
                   <dl>
                     <dt>Unread input</dt><dd>{unread}</dd>
@@ -420,22 +415,22 @@ export default function AppV2() {
                     <dt>Depth</dt><dd>{current.depth}</dd>
                     <dt>Transition</dt><dd>{transition ? `${transition.input || 'ε'}, ${transition.stackTop || 'ε'} → ${transition.replacement || 'ε'}` : 'initial configuration'}</dd>
                   </dl>
-                  <div className="semantics-note"><small>WHAT JUST HAPPENED</small><span>{describeTransition(transition)}</span></div>
+                  <div className="semantics-note"><small>What happened</small><span>{describeTransition(transition)}</span></div>
                 </section>
               </aside>
             </div>
 
-            <section className="panel playback-dock">
+            <section className="panel playback-dock" id="section-playback">
               <div className="playback-heading">
-                <div><small>04 · PLAYBACK</small><strong>Move through configurations without losing history.</strong></div>
-                <span>Space step · Shift+Space run · Alt+←/→ time travel</span>
+                <div><strong>{playbackCopy.title}</strong></div>
+                <span>{playbackCopy.hint}</span>
               </div>
               <InputTape input={current.input} inputIndex={current.inputIndex} />
               <div className="playback-controls-row">
                 <div className="controls">
                   <button disabled={!canMoveBack(debugHistory)} onClick={moveBack}>← Back</button>
                   <button disabled={!canMoveForward(debugHistory)} onClick={moveForward}>Forward →</button>
-                  <button className="primary-control" onClick={step} disabled={!runAvailable}>Step →</button>
+                  <button className="primary-control" onClick={step} disabled={!runAvailable}>Step</button>
                   <button className={running ? 'pause-control' : ''} onClick={() => setRunning((value) => !value)} disabled={!runAvailable}>{running ? 'Pause' : '▶ Run'}</button>
                   <button onClick={() => reset(input)}>↻ Reset</button>
                 </div>
@@ -446,9 +441,8 @@ export default function AppV2() {
                 <div className="rejection">
                   <div className="rejection-icon">×</div>
                   <div>
-                    <strong>BRANCH TERMINATED</strong>
-                    <span>{current.reason}</span>
-                    <small>This branch has no valid move. That alone does not prove the NPDA rejects the input.</small>
+                    <strong>Branch ended</strong>
+                    <span>{current.reason || 'No valid move from here.'}</span>
                     <RejectionContext machine={machine} config={current} />
                     <RejectionSummary machine={machine} input={current.input} mode={acceptanceMode} />
                   </div>
@@ -457,20 +451,20 @@ export default function AppV2() {
               {current.status === 'limit' && (
                 <div className="execution-limit">
                   <div className="limit-icon">!</div>
-                  <div><strong>SEARCH LIMIT</strong><span>{current.reason || 'A safety limit stopped this branch.'}</span><RejectionSummary machine={machine} input={current.input} mode={acceptanceMode} /></div>
+                  <div><strong>Search limit</strong><span>{current.reason || 'A safety limit stopped this branch.'}</span><RejectionSummary machine={machine} input={current.input} mode={acceptanceMode} /></div>
                 </div>
               )}
               {current.status === 'accepted' && (
                 <div className="acceptance">
                   <div className="acceptance-icon">✓</div>
-                  <div><strong>STRING ACCEPTED</strong><span>The selected acceptance condition is satisfied with all input consumed.</span></div>
+                  <div><strong>Accepted</strong><span>All input consumed, acceptance condition met.</span></div>
                 </div>
               )}
             </section>
 
             <section className="panel inspector-shell" id="workspace-inspector">
               <div className="inspector-heading">
-                <div><small>DEEP INSPECTION</small><strong>Open one lens at a time.</strong></div>
+                <div><strong>Inspect</strong></div>
                 <div className="inspector-tabs" role="tablist" aria-label="Debugger inspection views">
                   <button role="tab" aria-selected={inspectorView === 'trace'} className={inspectorView === 'trace' ? 'selected' : ''} onClick={() => setInspectorView('trace')}>Trace</button>
                   <button role="tab" aria-selected={inspectorView === 'tree'} className={inspectorView === 'tree' ? 'selected' : ''} onClick={() => setInspectorView('tree')}>Execution tree</button>

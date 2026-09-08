@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { cap, derivationStatusLabel } from '../content'
 import { deriveTarget, type DerivationMode } from '../core/cfg/derivation'
 import { parseGrammar } from '../core/cfg/grammarParser'
 import { buildParseTree } from '../core/cfg/parseTree'
@@ -45,12 +46,12 @@ export function DerivationExplorer({ grammarSource, target, onBack }: Derivation
           <button className={mode === 'leftmost' ? 'selected' : ''} onClick={() => setMode('leftmost')}>Leftmost</button>
           <button className={mode === 'rightmost' ? 'selected' : ''} onClick={() => setMode('rightmost')}>Rightmost</button>
         </div>
-        <div className="derivation-target"><small>TARGET STRING</small><strong>{target || 'ε'}</strong></div>
+        <div className="derivation-target"><small>Target</small><strong>{target || 'ε'}</strong></div>
       </div>
 
       {model.error ? <div className="derivation-error">{model.error}</div> : model.result && model.tree && model.grammar && <>
         <section className="panel derivation-strip-panel">
-          <div className="panel-heading"><div><span>DERIVATION TRACE</span><span className="heading-separator">/</span><span>{mode.toUpperCase()}</span></div><span>{model.result.explored} FORMS EXPLORED</span></div>
+          <div className="panel-heading"><div><span>Derivation</span><span className="heading-separator">/</span><span>{cap(mode)}</span></div><span>{model.result.explored} forms</span></div>
           <div className="derivation-sequence">
             {model.result.forms.map((form, index) => (
               <button key={`${form}-${index}`} className={index === stepIndex ? 'selected' : ''} onClick={() => setStepIndex(index)} disabled={index > maxStep}>
@@ -62,15 +63,15 @@ export function DerivationExplorer({ grammarSource, target, onBack }: Derivation
 
         <div className="derivation-grid">
           <section className="panel derivation-step-panel">
-            <div className="panel-heading"><div><span>STEP INSPECTOR</span><span className="heading-separator">/</span><span>D{stepIndex}</span></div><span>{model.result.status.toUpperCase()}</span></div>
+            <div className="panel-heading"><div><span>Step {stepIndex}</span></div><span>{derivationStatusLabel(model.result.status)}</span></div>
             <div className="sentential-stage">
-              <small>CURRENT SENTENTIAL FORM</small>
+              <small>Current form</small>
               <div className="sentential-form"><FormDisplay value={currentForm} /></div>
               {currentStep ? <div className="production-card">
-                <span>APPLIED PRODUCTION</span>
+                <span>Applied rule</span>
                 <strong>{currentStep.production}</strong>
                 <div><FormDisplay value={currentStep.before} focusIndex={currentStep.index} /><b>⇒</b><FormDisplay value={currentStep.after} /></div>
-              </div> : <div className="production-card idle"><span>START SYMBOL</span><strong>{model.grammar.startSymbol}</strong><p>Select Step or use Next to begin the derivation.</p></div>}
+              </div> : <div className="production-card idle"><span>Start symbol</span><strong>{model.grammar.startSymbol}</strong><p>Press Next to begin.</p></div>}
             </div>
             <div className="derivation-controls">
               <button disabled={stepIndex === 0} onClick={() => setStepIndex((value) => Math.max(0, value - 1))}>← Previous</button>
@@ -81,7 +82,7 @@ export function DerivationExplorer({ grammarSource, target, onBack }: Derivation
           </section>
 
           <section className="panel parse-tree-panel">
-            <div className="panel-heading"><div><span>PARSE TREE</span><span className="heading-separator">/</span><span>LIVE BUILD</span></div><span>STEP {stepIndex}</span></div>
+            <div className="panel-heading"><span>Parse tree</span></div>
             <ParseTree tree={model.tree} activeStep={stepIndex} />
             <div className="parse-tree-legend"><span><i className="active-node" />created this step</span><span><i className="future-node" />future node</span></div>
           </section>
