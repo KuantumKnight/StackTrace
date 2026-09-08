@@ -1,0 +1,202 @@
+.fluid-machine-viewport {
+  --fluid-edge-color: #7b8593;
+  --fluid-active-edge: #0d8a80;
+  --fluid-node-fill: #fffef9;
+  --fluid-node-stroke: #3156c8;
+  --fluid-active-fill: #e7ecfb;
+  --fluid-accepting: #0d766f;
+  --fluid-halo: rgba(13,118,111,.28);
+  --fluid-pulse: #54d8cd;
+  --fluid-initial: #7b8593;
+  position: relative;
+  z-index: 2;
+  width: min(97%, 760px);
+  aspect-ratio: 16 / 7;
+  min-height: 250px;
+  overflow: visible;
+  contain: layout paint;
+}
+
+html[data-theme='glass'] .fluid-machine-viewport {
+  --fluid-edge-color: #74859a;
+  --fluid-active-edge: #3cc8bd;
+  --fluid-node-fill: #f8fbff;
+  --fluid-node-stroke: #5074dc;
+  --fluid-active-fill: #eaf1ff;
+  --fluid-accepting: #2baea5;
+  --fluid-halo: rgba(60,200,189,.3);
+  --fluid-pulse: #9ffaf2;
+  --fluid-initial: #74859a;
+}
+
+html[data-theme='night'] .fluid-machine-viewport {
+  --fluid-edge-color: #65758a;
+  --fluid-active-edge: #53c9bd;
+  --fluid-node-fill: #111923;
+  --fluid-node-stroke: #7c9cff;
+  --fluid-active-fill: #14263a;
+  --fluid-accepting: #53c9bd;
+  --fluid-halo: rgba(83,201,189,.34);
+  --fluid-pulse: #b5fff9;
+  --fluid-initial: #71839a;
+}
+
+.fluid-machine-scene {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+  transition: transform 260ms cubic-bezier(.2,.8,.2,1);
+  will-change: transform;
+}
+
+.fluid-machine-canvas,
+.fluid-graph-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.fluid-machine-canvas {
+  display: block;
+  pointer-events: none;
+}
+
+.fluid-graph-overlay {
+  z-index: 2;
+  pointer-events: none;
+}
+
+.fluid-edge-label,
+.fluid-loop-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-width: 74px;
+  padding: 5px 8px;
+  border: 1px solid var(--chip-stroke);
+  border-radius: 7px;
+  color: var(--chip-text);
+  background: color-mix(in srgb, var(--chip-fill) 92%, transparent);
+  box-shadow: 0 4px 14px rgba(18,21,27,.06);
+  backdrop-filter: blur(8px);
+  font: 680 10.5px/1.15 ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-align: center;
+  white-space: nowrap;
+  transition: left 260ms cubic-bezier(.2,.8,.2,1), top 260ms cubic-bezier(.2,.8,.2,1), border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.fluid-edge-label.active,
+.fluid-loop-label.active {
+  border-color: var(--signal);
+  color: var(--signal);
+  background: color-mix(in srgb, var(--signal-soft) 92%, transparent);
+  transform: translate(-50%, -50%) scale(1.035);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--signal) 14%, transparent);
+}
+
+.fluid-loop-label {
+  display: grid;
+  gap: 2px;
+  padding-block: 7px;
+  white-space: normal;
+}
+
+.fluid-loop-label span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: opacity 150ms ease, font-weight 150ms ease;
+}
+
+.fluid-loop-label.active span:not(.active) { opacity: .52; }
+.fluid-loop-label span.active { opacity: 1; font-weight: 850; }
+
+.fluid-state-copy {
+  position: absolute;
+  display: flex;
+  width: 92px;
+  transform: translate(-50%, -50%);
+  flex-direction: column;
+  align-items: center;
+  gap: 43px;
+  color: var(--ink);
+  text-align: center;
+  transition: left 260ms cubic-bezier(.2,.8,.2,1), top 260ms cubic-bezier(.2,.8,.2,1), color 150ms ease;
+}
+
+.fluid-state-copy strong {
+  font: 820 12.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: -.02em;
+}
+
+.fluid-state-copy small {
+  min-height: 10px;
+  color: var(--node-caption);
+  font: 850 8px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .12em;
+}
+
+.fluid-state-copy.active strong { color: var(--signal); }
+
+.fluid-graph-semantics {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.machine-canvas > .fluid-machine-viewport {
+  margin: 48px auto 54px;
+}
+
+.challenge-machine-shell {
+  overflow: hidden;
+}
+
+.challenge-machine-shell .machine-panel {
+  min-height: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+.challenge-machine-shell .machine-heading {
+  border-bottom: 1px solid var(--line);
+}
+
+.challenge-machine-shell .machine-canvas {
+  min-height: 390px;
+}
+
+.challenge-machine-shell .machine-canvas > .fluid-machine-viewport {
+  margin-block: 38px 48px;
+}
+
+@media (max-width: 980px) {
+  .fluid-machine-viewport { width: 100%; min-height: 220px; }
+  .machine-canvas > .fluid-machine-viewport { margin-block: 40px 50px; }
+  .fluid-edge-label, .fluid-loop-label { font-size: 9.5px; }
+}
+
+@media (max-width: 620px) {
+  .fluid-machine-viewport { min-height: 190px; }
+  .fluid-edge-label, .fluid-loop-label { padding: 4px 6px; font-size: 8.5px; }
+  .fluid-state-copy { width: 74px; gap: 35px; }
+  .fluid-state-copy strong { font-size: 10.5px; }
+  .fluid-state-copy small { font-size: 7px; }
+  .challenge-machine-shell .machine-canvas { min-height: 320px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fluid-machine-scene,
+  .fluid-edge-label,
+  .fluid-loop-label,
+  .fluid-state-copy { transition: none !important; }
+}
