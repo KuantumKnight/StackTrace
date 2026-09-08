@@ -41,7 +41,8 @@ export function initialConfiguration(machine: PDA, input: string, mode: Acceptan
   return config
 }
 
-export function nextConfigurations(
+/** Return every enabled NPDA successor without choosing between branches. */
+export function allNextConfigurations(
   machine: PDA,
   config: Configuration,
   mode: AcceptanceMode,
@@ -104,7 +105,7 @@ function hasAcceptingContinuation(
     explored += 1
     if (depth >= maxDepth) continue
 
-    const children = nextConfigurations(machine, config, mode, explored)
+    const children = allNextConfigurations(machine, config, mode, explored)
     for (const child of children) {
       if (child.status === 'accepted' || isAccepted(machine, child, mode)) return true
       if (child.status !== 'active' || child.stack.length > 96) continue
@@ -120,32 +121,40 @@ function hasAcceptingContinuation(
 }
 
 /**
- * Pick a useful branch for single-path playback without changing NPDA semantics.
- * When several transitions are enabled, bounded look-ahead prefers a child that
- * can still reach acceptance. The execution tree remains the source of truth for
- * all branches; this function only chooses which witness the linear Step/Run UI follows.
+ * Return every successor, but put a bounded accepting witness first when one can
+ * be found. This keeps the linear Step/Run UI useful for an NPDA while callers
+ * that need exhaustive semantics use allNextConfigurations().
  */
+export function nextConfigurations(
+  machine: PDA,
+  config: Configuration,
+  mode: AcceptanceMode,
+  idSeed = 0,
+): Configuration[] {
+  const next = allNextConfigurations(machine, config, mode, idSeed)
+  if (next.length <= 1) return next
+
+  const acceptedIndex = next.findIndex((candidate) => candidate.status === 'accepted' || isAccepted(machine, candidate, mode))
+  if (acceptedIndex > 0) return [next[acceptedIndex], ...next.filter((_, index) => index !== acceptedIndex)]
+  if (acceptedIndex === 0) return next
+
+  const maxDepth = Math.max(48, Math.min(96, config.input.length * 5 + 20))
+  const witnessIndex = next.findIndex((candidate) => candidate.status === 'active' && hasAcceptingContinuation(machine, candidate, mode, maxDepth, 2400))
+  if (witnessIndex > 0) return [next[witnessIndex], ...next.filter((_, index) => index !== witnessIndex)]
+  if (witnessIndex === 0) return next
+
+  const viableIndex = next.findIndex((candidate) => candidate.status === 'active' && matchingTransitions(machine, candidate).length > 0)
+  if (viableIndex > 0) return [next[viableIndex], ...next.filter((_, index) => index !== viableIndex)]
+  return next
+}
+
 export function preferredNextConfiguration(
   machine: PDA,
   config: Configuration,
   mode: AcceptanceMode,
   idSeed = 0,
 ): Configuration {
-  const next = nextConfigurations(machine, config, mode, idSeed)
-  if (next.length <= 1) return next[0]
-
-  const accepted = next.find((candidate) => candidate.status === 'accepted' || isAccepted(machine, candidate, mode))
-  if (accepted) return accepted
-
-  const maxDepth = Math.max(48, Math.min(96, config.input.length * 5 + 20))
-  for (const candidate of next) {
-    if (candidate.status === 'active' && hasAcceptingContinuation(machine, candidate, mode, maxDepth, 2400)) {
-      return candidate
-    }
-  }
-
-  const immediatelyViable = next.find((candidate) => candidate.status === 'active' && matchingTransitions(machine, candidate).length > 0)
-  return immediatelyViable ?? next[0]
+  return nextConfigurations(machine, config, mode, idSeed)[0]
 }
 
 export function describeTransition(transition: PDATransition | undefined) {
