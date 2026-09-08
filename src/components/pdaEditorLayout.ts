@@ -61,13 +61,6 @@ function cubicPoint(start: Point, control1: Point, control2: Point, end: Point, 
   }
 }
 
-function unitNormal(from: Point, to: Point): Point {
-  const dx = to.x - from.x
-  const dy = to.y - from.y
-  const length = Math.max(Math.hypot(dx, dy), 1)
-  return { x: -dy / length, y: dx / length }
-}
-
 function pairKey(from: string, to: string) {
   return from < to ? `${from}\u0000${to}` : `${to}\u0000${from}`
 }
@@ -82,7 +75,7 @@ function baseLayouts(machine: PDA): BaseEdgeLayout[] {
   const pairCounts = new Map<string, number>()
   const loopCounts = new Map<string, number>()
 
-  return machine.transitions.flatMap((transition) => {
+  return machine.transitions.flatMap((transition): BaseEdgeLayout[] => {
     const from = machine.states.find((state) => state.id === transition.from)
     const to = machine.states.find((state) => state.id === transition.to)
     if (!from || !to) return []
@@ -103,7 +96,7 @@ function baseLayouts(machine: PDA): BaseEdgeLayout[] {
         curveMidpoint,
         normal: { x: 0, y: -1 },
         bend: rise,
-        kind: 'loop' as const,
+        kind: 'loop',
       }]
     }
 
@@ -130,7 +123,7 @@ function baseLayouts(machine: PDA): BaseEdgeLayout[] {
         curveMidpoint: { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 },
         normal,
         bend: 0,
-        kind: 'line' as const,
+        kind: 'line',
       }]
     }
 
@@ -145,7 +138,7 @@ function baseLayouts(machine: PDA): BaseEdgeLayout[] {
       curveMidpoint: quadraticPoint(start, control, end, 0.5),
       normal,
       bend,
-      kind: 'quadratic' as const,
+      kind: 'quadratic',
     }]
   })
 }
