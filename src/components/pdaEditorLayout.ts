@@ -10,7 +10,7 @@ const CHIP_GAP = 8
 const CANVAS_MARGIN = 10
 const PARALLEL_BEND = 30
 
-type Point = { x: number; y: number }
+export type Point = { x: number; y: number }
 
 type BaseEdgeLayout = {
   transitionId: string
@@ -19,6 +19,10 @@ type BaseEdgeLayout = {
   normal: Point
   bend: number
   kind: 'line' | 'quadratic' | 'loop'
+  start: Point
+  end: Point
+  control1?: Point
+  control2?: Point
 }
 
 export interface PDAEdgeLayout extends BaseEdgeLayout {
@@ -97,6 +101,10 @@ function baseLayouts(machine: PDA): BaseEdgeLayout[] {
         normal: { x: 0, y: -1 },
         bend: rise,
         kind: 'loop',
+        start,
+        end,
+        control1,
+        control2,
       }]
     }
 
@@ -124,6 +132,8 @@ function baseLayouts(machine: PDA): BaseEdgeLayout[] {
         normal,
         bend: 0,
         kind: 'line',
+        start,
+        end,
       }]
     }
 
@@ -139,6 +149,9 @@ function baseLayouts(machine: PDA): BaseEdgeLayout[] {
       normal,
       bend,
       kind: 'quadratic',
+      start,
+      end,
+      control1: control,
     }]
   })
 }
