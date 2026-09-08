@@ -22,9 +22,11 @@ function closeVerticalMachine(): PDA {
 }
 
 describe('MachineView fluid graph', () => {
-  it('renders the machine on canvas instead of SVG', () => {
+  it('renders a WebGL host with Canvas fallback instead of SVG', () => {
     const { container } = render(<MachineView machine={closeVerticalMachine()} activeState="q0" />)
+    expect(container.querySelector('.fluid-pixi-host')).toBeTruthy()
     expect(container.querySelector('.fluid-machine-canvas')).toBeTruthy()
+    expect(container.querySelector('.fluid-machine-viewport')?.getAttribute('data-renderer')).toBe('canvas-2d')
     expect(container.querySelector('svg')).toBeNull()
   })
 
