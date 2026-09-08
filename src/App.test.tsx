@@ -35,7 +35,7 @@ describe('StackTrace app integration', () => {
     expect(back.disabled).toBe(true)
     expect(forward.disabled).toBe(true)
 
-    await user.click(screen.getByRole('button', { name: /Step/ }))
+    await user.click(screen.getByRole('button', { name: 'Step →' }))
     expect(back.disabled).toBe(false)
 
     await user.click(back)
@@ -55,7 +55,7 @@ describe('StackTrace app integration', () => {
     await user.type(input, 'aabbb')
     await user.click(screen.getByRole('button', { name: /Load input/i }))
 
-    const step = screen.getByRole('button', { name: /Step/ })
+    const step = screen.getByRole('button', { name: 'Step →' })
     for (let index = 0; index < 7; index += 1) fireEvent.click(step)
 
     expect(screen.getByText('BRANCH TERMINATED')).toBeTruthy()
