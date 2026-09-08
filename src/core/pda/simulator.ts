@@ -6,6 +6,10 @@ function configurationKey(config: Configuration) {
   return `${config.state}|${config.inputIndex}|${config.stack.join('\u0001')}`
 }
 
+function renumber(configs: Configuration[], idSeed: number) {
+  return configs.map((config, index) => ({ ...config, id: `c${idSeed + index + 1}` }))
+}
+
 export function isAccepted(machine: PDA, config: Configuration, mode: AcceptanceMode) {
   const inputConsumed = config.inputIndex >= config.input.length
   if (!inputConsumed) return false
@@ -134,18 +138,25 @@ export function nextConfigurations(
   const next = allNextConfigurations(machine, config, mode, idSeed)
   if (next.length <= 1) return next
 
+  let ordered = next
   const acceptedIndex = next.findIndex((candidate) => candidate.status === 'accepted' || isAccepted(machine, candidate, mode))
-  if (acceptedIndex > 0) return [next[acceptedIndex], ...next.filter((_, index) => index !== acceptedIndex)]
-  if (acceptedIndex === 0) return next
+  if (acceptedIndex > 0) {
+    ordered = [next[acceptedIndex], ...next.filter((_, index) => index !== acceptedIndex)]
+    return renumber(ordered, idSeed)
+  }
+  if (acceptedIndex === 0) return renumber(next, idSeed)
 
   const maxDepth = Math.max(48, Math.min(96, config.input.length * 5 + 20))
   const witnessIndex = next.findIndex((candidate) => candidate.status === 'active' && hasAcceptingContinuation(machine, candidate, mode, maxDepth, 2400))
-  if (witnessIndex > 0) return [next[witnessIndex], ...next.filter((_, index) => index !== witnessIndex)]
-  if (witnessIndex === 0) return next
+  if (witnessIndex > 0) {
+    ordered = [next[witnessIndex], ...next.filter((_, index) => index !== witnessIndex)]
+    return renumber(ordered, idSeed)
+  }
+  if (witnessIndex === 0) return renumber(next, idSeed)
 
   const viableIndex = next.findIndex((candidate) => candidate.status === 'active' && matchingTransitions(machine, candidate).length > 0)
-  if (viableIndex > 0) return [next[viableIndex], ...next.filter((_, index) => index !== viableIndex)]
-  return next
+  if (viableIndex > 0) ordered = [next[viableIndex], ...next.filter((_, index) => index !== viableIndex)]
+  return renumber(ordered, idSeed)
 }
 
 export function preferredNextConfiguration(
