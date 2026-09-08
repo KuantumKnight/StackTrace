@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import type { PDA, PDATransition } from '../core/pda/types'
+import type { PDA } from '../core/pda/types'
+import { layoutPDAEdges, transitionLabel } from './pdaEditorLayout'
 
 interface MachineViewProps {
   machine: PDA
@@ -7,59 +8,16 @@ interface MachineViewProps {
   activeTransitionId?: string | null
 }
 
-interface EdgeGeometry {
-  transition: PDATransition
-  d: string
-  labelX: number
-  labelY: number
-}
-
-function buildEdge(machine: PDA, transition: PDATransition, index: number): EdgeGeometry {
-  const from = machine.states.find((state) => state.id === transition.from)!
-  const to = machine.states.find((state) => state.id === transition.to)!
-  const loop = from.id === to.id
-
-  if (loop) {
-    return {
-      transition,
-      d: `M ${from.x - 23} ${from.y - 26} C ${from.x - 82} ${from.y - 98}, ${from.x + 82} ${from.y - 98}, ${from.x + 23} ${from.y - 26}`,
-      labelX: from.x,
-      labelY: from.y - 88 - index * 2,
-    }
-  }
-
-  const dx = to.x - from.x
-  const dy = to.y - from.y
-  const length = Math.max(Math.hypot(dx, dy), 1)
-  const ux = dx / length
-  const uy = dy / length
-  const startX = from.x + ux * 38
-  const startY = from.y + uy * 38
-  const endX = to.x - ux * 42
-  const endY = to.y - uy * 42
-  const bend = index % 2 === 0 ? -8 : 8
-  const normalX = -uy * bend
-  const normalY = ux * bend
-  const midX = (startX + endX) / 2 + normalX
-  const midY = (startY + endY) / 2 + normalY
-
-  return {
-    transition,
-    d: `M ${startX} ${startY} Q ${midX} ${midY} ${endX} ${endY}`,
-    labelX: midX,
-    labelY: midY - 12,
-  }
-}
-
-function transitionLabel(transition: PDATransition) {
-  return `${transition.input || 'ε'}, ${transition.stackTop || 'ε'} → ${transition.replacement || 'ε'}`
-}
-
+const WIDTH = 640
+const HEIGHT = 280
 const radarStyle = { transformBox: 'fill-box', transformOrigin: 'center' } as const
 
 export function MachineView({ machine, activeState, activeTransitionId }: MachineViewProps) {
   const [zoom, setZoom] = useState(1)
-  const edges = useMemo(() => machine.transitions.map((transition, index) => buildEdge(machine, transition, index)), [machine])
+  const edges = useMemo(
+    () => layoutPDAEdges(machine, WIDTH, HEIGHT),
+    [machine],
+  )
   const activeTransition = machine.transitions.find((transition) => transition.id === activeTransitionId)
 
   return (
@@ -75,7 +33,7 @@ export function MachineView({ machine, activeState, activeTransitionId }: Machin
 
       <div className="machine-canvas" role="region" aria-label="PDA state graph" tabIndex={0}>
         <div className="graph-watermark">LIVE MACHINE</div>
-        <svg viewBox="0 0 640 280" role="img" aria-label="Animated PDA state diagram">
+        <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label="Animated PDA state diagram">
           <defs>
             <marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto">
               <path d="M0,0 L0,7 L8,3.5 z" />
@@ -86,16 +44,18 @@ export function MachineView({ machine, activeState, activeTransitionId }: Machin
             </filter>
           </defs>
 
-          <g className="machine-scene" style={{ transform: `translate(320px, 140px) scale(${zoom}) translate(-320px, -140px)` }}>
-            {edges.map(({ transition, d, labelX, labelY }) => {
+          <g className="machine-scene" style={{ transform: `translate(${WIDTH / 2}px, ${HEIGHT / 2}px) scale(${zoom}) translate(${-WIDTH / 2}px, ${-HEIGHT / 2}px)` }}>
+            {edges.map((edge) => {
+              const transition = machine.transitions.find((item) => item.id === edge.transitionId)
+              if (!transition) return null
               const isActive = transition.id === activeTransitionId
               return (
                 <g className={`transition-group ${isActive ? 'active' : ''}`} key={transition.id}>
-                  <path className="edge-hit-area" d={d} />
-                  <path className="edge" d={d} markerEnd="url(#arrow)" />
-                  {isActive && <path className="edge-flow" d={d} />}
-                  <g className="edge-label-chip" transform={`translate(${labelX} ${labelY})`}>
-                    <rect x="-54" y="-11" width="108" height="22" rx="6" />
+                  <path className="edge-hit-area" d={edge.d} />
+                  <path className="edge" d={edge.d} markerEnd="url(#arrow)" />
+                  {isActive && <path className="edge-flow" d={edge.d} />}
+                  <g className="edge-label-chip" transform={`translate(${edge.x} ${edge.y})`}>
+                    <rect x={-edge.width / 2} y="-11" width={edge.width} height="22" rx="6" />
                     <text textAnchor="middle" dominantBaseline="middle">{transitionLabel(transition)}</text>
                   </g>
                 </g>
