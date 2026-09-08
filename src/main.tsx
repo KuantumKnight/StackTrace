@@ -6,6 +6,7 @@ import './styles/human-polish.css'
 import './styles/experience.css'
 import './styles/build-workbench.css'
 import './styles/build-cinematic.css'
+import './styles/cfg-sync.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
