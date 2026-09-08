@@ -2,6 +2,21 @@
 
 All notable StackTrace release changes are documented here.
 
+## 1.2.0 — 2026-09-08
+
+### Visual system consolidation
+- Consolidated the five-layer CSS cascade into one tokenized system: `studio-v2.css` owns all design tokens, both themes (paper/night), machine SVG recolors, and the responsive layout
+- Restyled every subview — Derivations, CFG analysis, CFG→PDA, Test bench, Challenges, Examples, Learn, Share, Execution tree, and rejection diagnostics — with theme-aware solid materials, eliminating dark panels rendered inside light shells
+- Rebuilt the PDA Workbench (Build): compact header with a machine-health metrics strip, zoomable canvas with fit control (0.7×–1.5×), dynamic edge chips sized to their labels, keyboard nudging, and a solid three-pane layout
+- Reduced theming to paper and night; removed the glass theme, all glass materials, backdrop blur, the cursor ring, and magnetic hover effects
+- Removed the scroll-reveal that could leave content hidden on entry
+- Added explicit font tokens (Inter UI, JetBrains Mono, Instrument Serif display) and aligned `theme-color` with the paper surface
+- Restored the six-column execution trace grid (ID / state / unread / stack / operation / status)
+- Retired the v1 feature stylesheets (PDA editor, analysis, challenges, conversion, derivation, examples, learn, share, test bench, tree, and rejection diagnostics) from the cascade; all of their layout now lives in `app.css` and `studio-v2.css`
+
+### Documentation
+- Documented the final CSS layering and the typographic floor in DESIGN.md
+
 ## 1.1.0 — 2026-09-08
 
 ### Studio v2 frontend

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowUpIcon, CommandIcon, LayersIcon, MoonIcon, SearchIcon, SunIcon } from './LucideIcons'
+import { ArrowUpIcon, CommandIcon, MoonIcon, SearchIcon, SunIcon } from './LucideIcons'
 
-type Theme = 'paper' | 'glass' | 'night'
+type Theme = 'paper' | 'night'
 
 const commands = [
   { id: 'debug', label: 'Open debugger', hint: 'D', action: () => document.querySelector<HTMLElement>('[aria-label="Open StackTrace debugger"]')?.click() },
@@ -13,14 +13,8 @@ const commands = [
 
 function readTheme(): Theme {
   const saved = window.localStorage.getItem('stacktrace-theme') as Theme | null
-  if (saved === 'paper' || saved === 'glass' || saved === 'night') return saved
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'glass'
-}
-
-function themeLabel(theme: Theme) {
-  if (theme === 'paper') return 'Paper'
-  if (theme === 'night') return 'Night'
-  return 'Glass'
+  if (saved === 'paper' || saved === 'night') return saved
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'paper'
 }
 
 export function ExperienceLayer() {
@@ -55,8 +49,6 @@ export function ExperienceLayer() {
       setScrollProgress(progress)
       setShowTop(window.scrollY > 720)
       root.dataset.scrolled = window.scrollY > 24 ? 'true' : 'false'
-      root.style.setProperty('--scroll-y', `${window.scrollY}px`)
-      root.style.setProperty('--scroll-progress', String(progress))
     }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -75,90 +67,20 @@ export function ExperienceLayer() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
-  useEffect(() => {
-    const root = document.documentElement
-    if (!window.matchMedia('(pointer: fine)').matches) return
-
-    const cursor = document.createElement('div')
-    cursor.className = 'custom-cursor'
-    const dot = document.createElement('div')
-    dot.className = 'custom-cursor-dot'
-    document.body.append(cursor, dot)
-
-    const onMove = (event: PointerEvent) => {
-      root.style.setProperty('--cursor-x', `${event.clientX}px`)
-      root.style.setProperty('--cursor-y', `${event.clientY}px`)
-      const interactive = (event.target as HTMLElement | null)?.closest('button, a, input, textarea, select, [role="button"], [role="tab"]')
-      root.dataset.cursorHover = interactive ? 'true' : 'false'
-    }
-    window.addEventListener('pointermove', onMove, { passive: true })
-    return () => {
-      window.removeEventListener('pointermove', onMove)
-      cursor.remove()
-      dot.remove()
-      delete root.dataset.cursorHover
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!window.matchMedia('(pointer: fine)').matches || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const buttons = Array.from(document.querySelectorAll<HTMLElement>('.hero-run, .primary-control, .load-button'))
-    const cleanups = buttons.map((button) => {
-      const move = (event: PointerEvent) => {
-        const rect = button.getBoundingClientRect()
-        const x = (event.clientX - rect.left - rect.width / 2) * 0.08
-        const y = (event.clientY - rect.top - rect.height / 2) * 0.08
-        button.style.transform = `translate3d(${x}px, ${y}px, 0)`
-      }
-      const leave = () => { button.style.transform = '' }
-      button.addEventListener('pointermove', move)
-      button.addEventListener('pointerleave', leave)
-      return () => {
-        button.removeEventListener('pointermove', move)
-        button.removeEventListener('pointerleave', leave)
-      }
-    })
-    return () => cleanups.forEach((cleanup) => cleanup())
-  })
-
-  useEffect(() => {
-    const revealTargets = Array.from(document.querySelectorAll<HTMLElement>('.workspace-hero, .learning-thread, .workspace-stage, .playback-dock, .inspector-shell, .panel, .learn-workspace > *, .challenge-workspace > *, .examples-workspace > *'))
-    if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      revealTargets.forEach((element) => element.classList.add('is-revealed'))
-      return
-    }
-    revealTargets.forEach((element, index) => {
-      element.classList.add('reveal-ready')
-      element.style.setProperty('--reveal-order', String(index % 5))
-    })
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          ;(entry.target as HTMLElement).classList.add('is-revealed')
-          observer.unobserve(entry.target)
-        }
-      })
-    }, { threshold: 0.08, rootMargin: '0px 0px -4% 0px' })
-    revealTargets.forEach((element) => observer.observe(element))
-    return () => observer.disconnect()
-  })
-
   const cycleTheme = () => {
-    setTheme((current) => {
-      const next = current === 'paper' ? 'glass' : current === 'glass' ? 'night' : 'paper'
-      setToast(`${themeLabel(next)} theme enabled`)
-      return next
-    })
+    const next = theme === 'night' ? 'paper' : 'night'
+    setTheme(next)
+    setToast(next === 'night' ? 'Night theme enabled' : 'Paper theme enabled')
   }
 
-  const themeIcon = theme === 'night' ? <MoonIcon /> : theme === 'paper' ? <SunIcon /> : <LayersIcon />
+  const themeIcon = theme === 'night' ? <MoonIcon /> : <SunIcon />
 
   return (
     <>
       <div className="scroll-progress" aria-hidden="true"><span style={{ transform: `scaleX(${scrollProgress})` }} /></div>
 
       <div className="experience-controls" aria-label="Experience controls">
-        <button className="icon-button theme-button" type="button" onClick={cycleTheme} aria-label={`Theme: ${themeLabel(theme)}. Change theme`} title={`Theme: ${themeLabel(theme)}`}>
+        <button className="icon-button theme-button" type="button" onClick={cycleTheme} aria-label={`Theme: ${theme === 'night' ? 'Night' : 'Paper'}. Change theme`} title={`Theme: ${theme === 'night' ? 'Night' : 'Paper'}`}>
           {themeIcon}
         </button>
         <button className="command-button" type="button" onClick={() => setPaletteOpen(true)} aria-label="Open command palette">
