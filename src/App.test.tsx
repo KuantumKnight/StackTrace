@@ -26,6 +26,18 @@ describe('StackTrace app integration', () => {
     expect(screen.getByText('Even Palindromes')).toBeTruthy()
   })
 
+  it('opens the authored PDA build workbench', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: 'Build' }))
+    expect(screen.getByText(/PDA WORKBENCH/)).toBeTruthy()
+    expect(screen.getByText(/Shape the machine/)).toBeTruthy()
+    expect(screen.getByRole('toolbar', { name: 'Canvas tools' })).toBeTruthy()
+    expect(screen.getByLabelText('Initial stack symbol')).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Debug machine/i })).toBeTruthy()
+  })
+
   it('keeps future configurations when moving Back and Forward', async () => {
     const user = userEvent.setup()
     render(<App />)
