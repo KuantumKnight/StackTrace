@@ -13,9 +13,16 @@ interface PDAEditorProps {
 const WIDTH = 720
 const HEIGHT = 430
 const GRID = 12
+const MIN_ZOOM = 0.7
+const MAX_ZOOM = 1.5
 
 function label(transition: PDATransition) {
   return `${transition.input || 'ε'}, ${transition.stackTop || 'ε'} → ${transition.replacement || 'ε'}`
+}
+
+/** Chip is sized to the label so long rules like `a, XZ → bXZ` never clip. */
+function chipWidth(text: string) {
+  return Math.max(96, text.length * 6.9 + 18)
 }
 
 function edgeGeometry(machine: PDA, transition: PDATransition, index: number) {
@@ -57,6 +64,7 @@ export function PDAEditor({ machine, onChange, onBack }: PDAEditorProps) {
   const [selectedTransitionId, setSelectedTransitionId] = useState<string | null>(null)
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [snapToGrid, setSnapToGrid] = useState(true)
+  const [zoom, setZoom] = useState(1)
 
   const selectedState = machine.states.find((state) => state.id === selectedStateId) || machine.states[0]
   const selectedTransition = machine.transitions.find((transition) => transition.id === selectedTransitionId)
@@ -141,6 +149,8 @@ export function PDAEditor({ machine, onChange, onBack }: PDAEditorProps) {
     })
   }
 
+  const zoomBy = (delta: number) => setZoom((value) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round((value + delta) * 100) / 100)))
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null
@@ -183,9 +193,8 @@ export function PDAEditor({ machine, onChange, onBack }: PDAEditorProps) {
 
         <div className="builder-hero-row">
           <div className="builder-title-block">
-            <small>GRAPH AUTHORING</small>
-            <h1>Shape the machine. <em>Then prove it.</em></h1>
-            <p>Drag states, author transitions, validate structure, and hand the exact machine straight back to the debugger.</p>
+            <h1>Shape the machine, <em>then prove it.</em></h1>
+            <p>Drag states, author transitions, validate the structure, and hand the exact machine back to the debugger.</p>
           </div>
 
           <div className="builder-primary-actions">
@@ -249,6 +258,10 @@ export function PDAEditor({ machine, onChange, onBack }: PDAEditorProps) {
               <button onClick={addState} title="Add state (A)"><b>+</b><span>State</span></button>
               <button onClick={addTransition} title="Add transition (E)"><b>↗</b><span>Edge</span></button>
               <button className={snapToGrid ? 'active' : ''} aria-pressed={snapToGrid} onClick={() => setSnapToGrid((value) => !value)} title="Toggle snap to grid"><b>⌗</b><span>Snap</span></button>
+              <span className="tool-rail-separator" aria-hidden="true" />
+              <button onClick={() => zoomBy(-0.1)} title="Zoom out" disabled={zoom <= MIN_ZOOM}><b>−</b></button>
+              <button className="zoom-readout" onClick={() => setZoom(1)} title="Fit to view">{Math.round(zoom * 100)}%</button>
+              <button onClick={() => zoomBy(0.1)} title="Zoom in" disabled={zoom >= MAX_ZOOM}><b>+</b></button>
             </div>
 
             <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} aria-label="Editable PDA graph">
@@ -257,45 +270,52 @@ export function PDAEditor({ machine, onChange, onBack }: PDAEditorProps) {
                 <filter id="editor-node-shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="8" stdDeviation="8" floodOpacity=".12" /></filter>
               </defs>
 
-              {machine.transitions.map((transition, index) => {
-                const geometry = edgeGeometry(machine, transition, index)
-                if (!geometry) return null
-                const selected = selectedTransition?.id === transition.id
-                return (
-                  <g key={transition.id} className={`designer-edge ${selected ? 'selected' : ''}`} onClick={() => { setSelectedTransitionId(transition.id); setSelectedStateId(transition.from) }}>
-                    <path className="designer-edge-hit" d={geometry.d} />
-                    <path className="designer-edge-line" d={geometry.d} markerEnd="url(#editor-arrow)" />
-                    <g className="designer-edge-chip" transform={`translate(${geometry.x} ${geometry.y})`}><rect x="-55" y="-11" width="110" height="22" rx="7" /><text textAnchor="middle" y="3">{label(transition)}</text></g>
-                  </g>
-                )
-              })}
+              <g className="builder-scene" style={{ transform: `translate(${WIDTH / 2}px, ${HEIGHT / 2}px) scale(${zoom}) translate(${-WIDTH / 2}px, ${-HEIGHT / 2}px)` }}>
+                {machine.transitions.map((transition, index) => {
+                  const geometry = edgeGeometry(machine, transition, index)
+                  if (!geometry) return null
+                  const selected = selectedTransition?.id === transition.id
+                  const text = label(transition)
+                  const width = chipWidth(text)
+                  return (
+                    <g key={transition.id} className={`designer-edge ${selected ? 'selected' : ''}`} onClick={() => { setSelectedTransitionId(transition.id); setSelectedStateId(transition.from) }}>
+                      <path className="designer-edge-hit" d={geometry.d} />
+                      <path className="designer-edge-line" d={geometry.d} markerEnd="url(#editor-arrow)" />
+                      <g className="designer-edge-chip" transform={`translate(${geometry.x} ${geometry.y})`}>
+                        <rect x={-width / 2} y="-12" width={width} height="24" rx="7" />
+                        <text textAnchor="middle" y="3.5">{text}</text>
+                      </g>
+                    </g>
+                  )
+                })}
 
-              {machine.states.map((state) => {
-                const selected = selectedState?.id === state.id && !selectedTransition
-                return (
-                  <g
-                    key={state.id}
-                    className={`designer-state ${selected ? 'selected' : ''}`}
-                    transform={`translate(${state.x} ${state.y})`}
-                    onPointerDown={(event) => { setSelectedStateId(state.id); setSelectedTransitionId(null); setDraggingId(state.id); event.currentTarget.setPointerCapture(event.pointerId) }}
-                    onPointerMove={(event) => moveState(event, state.id)}
-                    onPointerUp={() => setDraggingId(null)}
-                    onPointerCancel={() => setDraggingId(null)}
-                  >
-                    {state.id === machine.startState && <path className="designer-start-arrow" d="M -67 0 L -42 0" markerEnd="url(#editor-arrow)" />}
-                    {selected && <circle className="selection-halo" r="44" />}
-                    <circle className="state-body" r="34" filter="url(#editor-node-shadow)" />
-                    {state.accepting && <circle className="accepting-ring" r="27" />}
-                    <text textAnchor="middle" y="4">{state.name}</text>
-                    <text className="designer-state-role" textAnchor="middle" y="53">{state.id === machine.startState ? 'START' : state.accepting ? 'FINAL' : ''}</text>
-                  </g>
-                )
-              })}
+                {machine.states.map((state) => {
+                  const selected = selectedState?.id === state.id && !selectedTransition
+                  return (
+                    <g
+                      key={state.id}
+                      className={`designer-state ${selected ? 'selected' : ''}`}
+                      transform={`translate(${state.x} ${state.y})`}
+                      onPointerDown={(event) => { setSelectedStateId(state.id); setSelectedTransitionId(null); setDraggingId(state.id); event.currentTarget.setPointerCapture(event.pointerId) }}
+                      onPointerMove={(event) => moveState(event, state.id)}
+                      onPointerUp={() => setDraggingId(null)}
+                      onPointerCancel={() => setDraggingId(null)}
+                    >
+                      {state.id === machine.startState && <path className="designer-start-arrow" d="M -67 0 L -42 0" markerEnd="url(#editor-arrow)" />}
+                      {selected && <circle className="selection-halo" r="44" />}
+                      <circle className="state-body" r="34" filter="url(#editor-node-shadow)" />
+                      {state.accepting && <circle className="accepting-ring" r="27" />}
+                      <text textAnchor="middle" y="4.5">{state.name}</text>
+                      <text className="designer-state-role" textAnchor="middle" y="54">{state.id === machine.startState ? 'START' : state.accepting ? 'FINAL' : ''}</text>
+                    </g>
+                  )
+                })}
+              </g>
             </svg>
 
             <div className="canvas-status-bar">
               <span><i className={snapToGrid ? 'status-dot on' : 'status-dot'} />{snapToGrid ? 'Snap enabled' : 'Free placement'}</span>
-              <span>Arrow keys nudge · Shift = ×2 · Delete removes selection</span>
+              <span>Arrow keys nudge · Shift = ×2 · Delete removes selection · {Math.round(zoom * 100)}% zoom</span>
             </div>
           </div>
         </section>

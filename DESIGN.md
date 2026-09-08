@@ -97,15 +97,28 @@ Never imply that one dead nondeterministic branch means the input is rejected.
 - machine and trace canvases may scroll internally when shrinking would make formal labels unreadable;
 - inspector lenses remain tabbed rather than vertically dumping every telemetry view.
 
+### Typographic floor
+
+- UI text is set in Inter at 13–16px; uppercase kickers may go to 9px minimum.
+- Text below 9px is reserved for canvas tick marks only (stack-depth labels, tape end markers) — secondary aids, never primary content.
+- Display type is Instrument Serif, used for the hero headline (`clamp(38px, 4.6vw, 67px)`) and the wordmark.
+- All numerals, symbols, and formal labels use JetBrains Mono.
+
 ## CSS architecture
 
-`src/styles/app.css` is the legacy structural fallback for existing components.
+The cascade is a fixed five-layer stack, loaded in this order:
 
-`src/styles/studio-v2.css` is the active visual system and responsive debugger layout. It is imported last by `AppV2.tsx` and owns the theme.
+1. `src/styles/studio-v2.css` — the visual system. Owns all design tokens, both themes (`:root` paper, `html[data-theme='night']`), machine SVG recolors, keyframes, and the responsive layout.
+2. `src/styles/app.css` — structural layout for every view (workspace, derivations, analysis, conversion, test bench, challenges, examples, learn, share, execution tree, rejection diagnostics).
+3. `src/styles/human-polish.css` — motion and focus choreography only (route transitions, scroll behavior, focus rings). Solid theme-aware materials; no glass.
+4. `src/styles/experience.css` — global chrome only (typography voice, scroll progress, ⌘K palette, floating controls, toasts, footer). No theme variables.
+5. `src/styles/build-workbench.css` — the PDA Workbench view only.
 
-Do not create another global “polish” or “theme” override file. New visual rules belong in `studio-v2.css`; feature-specific structural rules remain with their feature stylesheet.
+Rules:
 
-Retired theme generations must be deleted rather than left imported in the cascade.
+- Do not create another global “polish” or “theme” override file. New visual rules belong in `studio-v2.css` (tokens, themes, machine surfaces) or `app.css` (view structure).
+- No backdrop blur, glass materials, or glow effects anywhere in the cascade.
+- Retired theme generations are deleted rather than left imported in the cascade. The v1 feature stylesheets (`pdaEditor.css`, `analysis.css`, `challenges.css`, `conversion.css`, `derivation.css`, `examples.css`, `learn.css`, `share.css`, `testBench.css`, and the tree/rejection stylesheets) are now inert stubs kept only to keep the import graph stable; all of their layout lives in `app.css` and `studio-v2.css`.
 
 ## Avoid
 

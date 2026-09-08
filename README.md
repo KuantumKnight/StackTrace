@@ -196,4 +196,4 @@ The release workflow independently repeats the locked install, tests, typecheck,
 
 ## Release status
 
-StackTrace is at **v1.0.0 scope**. The original MVP plus the identified post-MVP learning/debugging gaps are implemented. Remaining ideas in the roadmap are optional research or scale extensions rather than unfinished baseline work.
+StackTrace is at **v1.2.0**. The original MVP, the post-MVP learning/debugging gap set, and the Studio v2 frontend (1.1.0) are all implemented, and 1.2.0 consolidates the frontend into a single tokenized visual system with paper/night themes and a rebuilt PDA Workbench. Remaining ideas in the roadmap are optional research or scale extensions rather than unfinished baseline work.
