@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { CFGAnalysis } from './components/CFGAnalysis'
 import { CFGEditor } from './components/CFGEditor'
 import { ChallengeMode } from './components/ChallengeMode'
@@ -59,8 +59,11 @@ export default function App() {
   const [running, setRunning] = useState(false)
   const [speed, setSpeed] = useState(720)
   const [view, setView] = useState<AppView>('workspace')
+  const [navigationOpen, setNavigationOpen] = useState(false)
   const [designerReturnView, setDesignerReturnView] = useState<AppView>('workspace')
   const [activeChallengeId, setActiveChallengeId] = useState<string | null>(boot?.activeChallengeId ?? null)
+  const navigationMenuRef = useRef<HTMLDivElement>(null)
+  const navigationTriggerRef = useRef<HTMLButtonElement>(null)
 
   const history = debugHistory.entries
   const activeIndex = debugHistory.cursor
@@ -105,6 +108,26 @@ export default function App() {
   useEffect(() => {
     saveWorkspace(workspaceSnapshot)
   }, [workspaceSnapshot])
+
+  useEffect(() => {
+    if (!navigationOpen) return
+
+    const closeOnOutsidePress = (event: PointerEvent) => {
+      if (!navigationMenuRef.current?.contains(event.target as Node)) setNavigationOpen(false)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      setNavigationOpen(false)
+      navigationTriggerRef.current?.focus()
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsidePress)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePress)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [navigationOpen])
 
   useEffect(() => {
     if (!running) return
@@ -250,22 +273,30 @@ export default function App() {
           <div className="brand-mark" aria-hidden="true"><span /></div>
           <div><strong>StackTrace</strong><span>CFG + PDA visual debugger</span></div>
         </div>
-        <nav aria-label="Workspace views">
-          <button aria-pressed={view === 'workspace'} className={view === 'workspace' ? 'active-tab' : ''} onClick={() => setView('workspace')}>Workspace</button>
-          <button aria-pressed={view === 'derivations'} className={view === 'derivations' ? 'active-tab' : ''} onClick={() => setView('derivations')}>Derive</button>
-          <button aria-pressed={view === 'analysis'} className={view === 'analysis' ? 'active-tab' : ''} onClick={() => setView('analysis')}>Analyze</button>
-          <button aria-pressed={view === 'conversion'} className={view === 'conversion' ? 'active-tab' : ''} onClick={() => setView('conversion')}>CFG → PDA</button>
-          <button aria-pressed={view === 'designer'} className={view === 'designer' ? 'active-tab' : ''} onClick={() => openDesigner('workspace')}>Designer</button>
-          <button onClick={() => {
-            setView('workspace')
-            window.setTimeout(() => document.getElementById('execution-tree')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0)
-          }}>Tree</button>
-          <button aria-pressed={view === 'tests'} className={view === 'tests' ? 'active-tab' : ''} onClick={() => setView('tests')}>Tests</button>
-          <button aria-pressed={view === 'challenges'} className={view === 'challenges' ? 'active-tab' : ''} onClick={() => setView('challenges')}>Challenges</button>
-          <button aria-pressed={view === 'examples'} className={view === 'examples' ? 'active-tab' : ''} onClick={() => setView('examples')}>Examples</button>
-          <button aria-pressed={view === 'learn'} className={view === 'learn' ? 'active-tab' : ''} onClick={() => setView('learn')}>Learn</button>
-          <button aria-pressed={view === 'share'} className={view === 'share' ? 'active-tab' : ''} onClick={() => setView('share')}>Share</button>
-        </nav>
+        <div className="nav-cluster">
+          <nav aria-label="Primary workspace views">
+            <button aria-pressed={view === 'workspace'} className={view === 'workspace' ? 'active-tab' : ''} onClick={() => setView('workspace')}>Workspace</button>
+            <button aria-pressed={view === 'designer'} className={view === 'designer' ? 'active-tab' : ''} onClick={() => openDesigner('workspace')}>Designer</button>
+            <button aria-pressed={view === 'tests'} className={view === 'tests' ? 'active-tab' : ''} onClick={() => setView('tests')}>Tests</button>
+            <button aria-pressed={view === 'challenges'} className={view === 'challenges' ? 'active-tab' : ''} onClick={() => setView('challenges')}>Challenges</button>
+            <button aria-pressed={view === 'learn'} className={view === 'learn' ? 'active-tab' : ''} onClick={() => setView('learn')}>Learn</button>
+          </nav>
+          <div className="nav-overflow" ref={navigationMenuRef}>
+            <button ref={navigationTriggerRef} className="nav-overflow-trigger" aria-expanded={navigationOpen} aria-controls="secondary-navigation" onClick={() => setNavigationOpen((open) => !open)}>Explore</button>
+            {navigationOpen && <div className="nav-menu" id="secondary-navigation" role="group" aria-label="More workspace views">
+              <button aria-pressed={view === 'derivations'} className={view === 'derivations' ? 'active-tab' : ''} onClick={() => { setView('derivations'); setNavigationOpen(false) }}>Derive</button>
+              <button aria-pressed={view === 'analysis'} className={view === 'analysis' ? 'active-tab' : ''} onClick={() => { setView('analysis'); setNavigationOpen(false) }}>Analyze</button>
+              <button aria-pressed={view === 'conversion'} className={view === 'conversion' ? 'active-tab' : ''} onClick={() => { setView('conversion'); setNavigationOpen(false) }}>CFG → PDA</button>
+              <button onClick={() => {
+                setView('workspace')
+                setNavigationOpen(false)
+                window.setTimeout(() => document.getElementById('execution-tree')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0)
+              }}>Tree</button>
+              <button aria-pressed={view === 'examples'} className={view === 'examples' ? 'active-tab' : ''} onClick={() => { setView('examples'); setNavigationOpen(false) }}>Examples</button>
+              <button aria-pressed={view === 'share'} className={view === 'share' ? 'active-tab' : ''} onClick={() => { setView('share'); setNavigationOpen(false) }}>Share</button>
+            </div>}
+          </div>
+        </div>
         <div className={`status-badge ${current.status}`}><span className="status-light" />{current.status.toUpperCase()}</div>
       </header>
 
