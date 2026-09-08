@@ -58,4 +58,34 @@ describe('MachineView edge layout', () => {
     expect(paths[2]).toContain(' Q ')
     expect(paths[1]).not.toBe(paths[2])
   })
+
+  it('bundles repeated qWork self-loops into one clean arc with all rules visible', () => {
+    const machine: PDA = {
+      startState: 'qInit',
+      initialStackSymbol: 'Z',
+      states: [
+        { id: 'qInit', name: 'qInit', initial: true, x: 100, y: 132 },
+        { id: 'qWork', name: 'qWork', x: 320, y: 132 },
+        { id: 'qAccept', name: 'qAccept', accepting: true, x: 550, y: 132 },
+      ],
+      transitions: [
+        { id: 'start', from: 'qInit', to: 'qWork', input: 'ε', stackTop: 'Z', replacement: 'SZ' },
+        { id: 'prod-0', from: 'qWork', to: 'qWork', input: 'ε', stackTop: 'S', replacement: '(S)S' },
+        { id: 'prod-1', from: 'qWork', to: 'qWork', input: 'ε', stackTop: 'S', replacement: 'ε' },
+        { id: 'terminal-open', from: 'qWork', to: 'qWork', input: '(', stackTop: '(', replacement: 'ε' },
+        { id: 'terminal-close', from: 'qWork', to: 'qWork', input: ')', stackTop: ')', replacement: 'ε' },
+        { id: 'accept', from: 'qWork', to: 'qAccept', input: 'ε', stackTop: 'Z', replacement: 'ε' },
+      ],
+    }
+
+    const { container } = render(<MachineView machine={machine} activeState="qWork" activeTransitionId="prod-0" />)
+    const bundle = container.querySelector('.loop-bundle')
+
+    expect(bundle).toBeTruthy()
+    expect(bundle?.getAttribute('data-loop-count')).toBe('4')
+    expect(bundle?.querySelectorAll('.edge')).toHaveLength(1)
+    expect(bundle?.querySelectorAll('.edge-label-chip text')).toHaveLength(4)
+    expect(container.querySelectorAll('.edge')).toHaveLength(3)
+    expect(bundle?.classList.contains('active')).toBe(true)
+  })
 })
