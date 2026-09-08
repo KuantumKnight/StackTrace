@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { runLanguageTests } from '../core/pda/testBench'
 import type { AcceptanceMode, PDA } from '../core/pda/types'
 import { challenges } from '../data/challenges'
+import { MachineView } from './MachineView'
 import '../styles/challenges.css'
 import '../styles/challenge-score.css'
 
@@ -22,6 +23,7 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
   const selected = challenges.find((challenge) => challenge.id === selectedId) || challenges[0]
   const isActive = activeChallengeId === selected.id
   const challengeMode = selected.acceptanceMode
+  const previewMachine = isActive ? machine : selected.brokenMachine
   const publicResults = useMemo(() => runLanguageTests(machine, selected.publicTests, challengeMode), [machine, selected, challengeMode])
   const hiddenResults = useMemo(() => runLanguageTests(machine, selected.hiddenTests, challengeMode), [machine, selected, challengeMode])
   const publicPassedCount = publicResults.filter((result) => result.passed).length
@@ -89,6 +91,10 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
             </div>
             {showHint && <div className="challenge-hint"><small>HINT · NO-HINT BONUS FORFEITED</small><span>{selected.hint}</span></div>}
           </section>
+
+          <div className="challenge-machine-shell" aria-label={isActive ? 'Current repair machine' : 'Broken machine preview'}>
+            <MachineView machine={previewMachine} activeState={previewMachine.startState} />
+          </div>
 
           <section className="panel challenge-tests">
             <div className="panel-heading"><span>VALIDATION</span><span>{solved ? 'SOLVED' : isActive ? 'CHECKING CURRENT MACHINE' : 'START TO EDIT'}</span></div>
