@@ -15,8 +15,8 @@ export function RejectionSummary({ machine, input, mode }: RejectionSummaryProps
   if (analysis.verdict === 'accepted') {
     return (
       <div className="global-verdict branch-survives">
-        <div><small>WHOLE NPDA SEARCH</small><strong>Another branch accepts this input.</strong></div>
-        <span>The selected branch terminated, but an accepting computation exists at depth {analysis.acceptingDepth}. Use the execution tree and “Focus accept” instead of treating this branch death as rejection.</span>
+        <div><small>All branches</small><strong>Another branch accepts this input.</strong></div>
+        <span>Accepting path at depth {analysis.acceptingDepth}. Open the tree and press Focus accept.</span>
       </div>
     )
   }
@@ -24,8 +24,8 @@ export function RejectionSummary({ machine, input, mode }: RejectionSummaryProps
   if (analysis.verdict === 'limit') {
     return (
       <div className="global-verdict search-limited">
-        <div><small>WHOLE NPDA SEARCH</small><strong>Inconclusive: execution limit reached.</strong></div>
-        <span>{analysis.explored} configurations explored · {analysis.deadBranches} dead · {analysis.limitedBranches} limited. StackTrace does not label this input rejected because the bounded search did not prove that.</span>
+        <div><small>All branches</small><strong>Inconclusive: hit a search limit.</strong></div>
+        <span>{analysis.explored} explored, {analysis.deadBranches} dead, {analysis.limitedBranches} limited. Not proven rejected.</span>
         {analysis.closest && <code>closest: ({analysis.closest.state}, {analysis.closest.input.slice(analysis.closest.inputIndex) || 'ε'}, {analysis.closest.stack.join('') || 'ε'})</code>}
       </div>
     )
@@ -33,10 +33,10 @@ export function RejectionSummary({ machine, input, mode }: RejectionSummaryProps
 
   return (
     <div className="global-verdict search-rejected">
-      <div><small>WHOLE NPDA SEARCH</small><strong>Rejected: every explored computation terminates.</strong></div>
-      <span>{analysis.explored} configurations explored · {analysis.deadBranches} dead branches · no accepting branch.</span>
+      <div><small>All branches</small><strong>Rejected: every branch ends.</strong></div>
+      <span>{analysis.explored} explored, {analysis.deadBranches} dead, none accept.</span>
       {analysis.closest && <div className="closest-branch">
-        <small>CLOSEST BRANCH</small>
+        <small>Closest branch</small>
         <code>({analysis.closest.state}, {analysis.closest.input.slice(analysis.closest.inputIndex) || 'ε'}, {analysis.closest.stack.join('') || 'ε'})</code>
         <span>{analysis.closest.reason || 'No accepting transition remains.'}</span>
       </div>}

@@ -8,9 +8,9 @@ interface StackViewProps {
 
 function stackDelta(previous: string[], current: string[]) {
   if (!previous.length && !current.length) return { kind: 'idle', label: 'No stack mutation' }
-  if (current.length > previous.length) return { kind: 'push', label: `PUSH +${current.length - previous.length}` }
-  if (current.length < previous.length) return { kind: 'pop', label: `POP −${previous.length - current.length}` }
-  if (current.join('') !== previous.join('')) return { kind: 'replace', label: 'REPLACE TOP' }
+  if (current.length > previous.length) return { kind: 'push', label: `Push +${current.length - previous.length}` }
+  if (current.length < previous.length) return { kind: 'pop', label: `Pop −${previous.length - current.length}` }
+  if (current.join('') !== previous.join('')) return { kind: 'replace', label: 'Replace top' }
   return { kind: 'idle', label: 'Stack unchanged' }
 }
 
@@ -21,7 +21,7 @@ export function StackView({ stack, previousStack = [] }: StackViewProps) {
   return (
     <section className="panel stack-panel">
       <div className="panel-heading">
-        <div><span>STACK MEMORY</span><span className="heading-separator">/</span><span>LIFO</span></div>
+        <div><span>Stack</span></div>
         <span>{stack.length} symbols</span>
       </div>
 
@@ -40,12 +40,11 @@ export function StackView({ stack, previousStack = [] }: StackViewProps) {
               style={{ '--stack-index': index } as CSSProperties}
             >
               <span>{symbol}</span>
-              <small>{index === 0 ? 'TOP' : `#${index}`}</small>
+              <small>{index === 0 ? 'Top' : `#${index}`}</small>
             </div>
           )) : <div className="empty-stack"><b>ε</b><span>empty stack</span></div>}
         </div>
         <div className="stack-rail right" />
-        <div className="stack-base">STACK BASE</div>
       </div>
     </section>
   )

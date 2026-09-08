@@ -50,35 +50,35 @@ export function CFGAnalysis({ grammarSource, onApplyGrammar, onBack }: CFGAnalys
     <section className="analysis-workspace">
       <div className="analysis-toolbar">
         <button onClick={onBack}>← Workspace</button>
-        <div><small>CFG STATIC ANALYSIS</small><strong>FIRST · FOLLOW · DIAGNOSTICS · TRANSFORMS · AMBIGUITY SEARCH</strong></div>
+        <div><strong>CFG analysis</strong></div>
       </div>
 
       {model.error ? <div className="analysis-error">{model.error}</div> : model.grammar && model.analysis && model.ambiguity && <>
         <div className="analysis-summary">
-          <span><small>START</small><b>{model.grammar.startSymbol}</b></span>
-          <span><small>VARIABLES</small><b>{model.grammar.nonTerminals.length}</b></span>
-          <span><small>TERMINALS</small><b>{model.grammar.terminals.length}</b></span>
-          <span><small>NULLABLE</small><b>{model.analysis.nullable.length}</b></span>
-          <span><small>ISSUES</small><b>{model.diagnostics.length + model.analysis.directLeftRecursive.length + model.factoring.length}</b></span>
+          <span><small>Start</small><b>{model.grammar.startSymbol}</b></span>
+          <span><small>Variables</small><b>{model.grammar.nonTerminals.length}</b></span>
+          <span><small>Terminals</small><b>{model.grammar.terminals.length}</b></span>
+          <span><small>Nullable</small><b>{model.analysis.nullable.length}</b></span>
+          <span><small>Issues</small><b>{model.diagnostics.length + model.analysis.directLeftRecursive.length + model.factoring.length}</b></span>
         </div>
 
         <div className="analysis-grid">
           <section className="panel analysis-panel">
-            <div className="panel-heading"><span>FIRST SETS</span><span>predictive entry symbols</span></div>
+            <div className="panel-heading"><span>FIRST sets</span></div>
             <div className="set-list">
               {model.grammar.nonTerminals.map((symbol) => <SetChip key={symbol} name={`FIRST(${symbol})`} values={model.analysis!.first[symbol] || []} />)}
             </div>
           </section>
 
           <section className="panel analysis-panel">
-            <div className="panel-heading"><span>FOLLOW SETS</span><span>legal successors</span></div>
+            <div className="panel-heading"><span>FOLLOW sets</span></div>
             <div className="set-list">
               {model.grammar.nonTerminals.map((symbol) => <SetChip key={symbol} name={`FOLLOW(${symbol})`} values={model.analysis!.follow[symbol] || []} />)}
             </div>
           </section>
 
           <section className="panel analysis-panel">
-            <div className="panel-heading"><span>GRAMMAR HEALTH</span><span>{model.diagnostics.length ? `${model.diagnostics.length} DIAGNOSTICS` : 'CLEAN'}</span></div>
+            <div className="panel-heading"><span>Grammar health</span><span>{model.diagnostics.length ? `${model.diagnostics.length} issues` : 'Clean'}</span></div>
             <div className="health-list">
               <div><small>Nullable variables</small><strong>{model.analysis.nullable.join(', ') || 'None'}</strong></div>
               <div><small>Direct left recursion</small><strong className={model.analysis.directLeftRecursive.length ? 'warn' : 'ok'}>{model.analysis.directLeftRecursive.join(', ') || 'None detected'}</strong></div>
@@ -92,47 +92,47 @@ export function CFGAnalysis({ grammarSource, onApplyGrammar, onBack }: CFGAnalys
           </section>
 
           <section className="panel analysis-panel ambiguity-panel">
-            <div className="panel-heading"><span>AMBIGUITY WITNESS</span><span>BOUNDED LEFTMOST SEARCH</span></div>
+            <div className="panel-heading"><span>Ambiguity witness</span><span>Bounded search</span></div>
             {model.ambiguity.witness ? <div className="ambiguity-witness">
-              <div><small>WITNESS STRING</small><strong>{model.ambiguity.witness.value}</strong></div>
+              <div><small>Witness</small><strong>{model.ambiguity.witness.value}</strong></div>
               <div className="ambiguity-paths">
                 <ol>{model.ambiguity.witness.derivationA.map((form, index) => <li key={`a-${index}`}>{form}</li>)}</ol>
                 <span>≠</span>
                 <ol>{model.ambiguity.witness.derivationB.map((form, index) => <li key={`b-${index}`}>{form}</li>)}</ol>
               </div>
-              <p>Two distinct leftmost derivations reach the same terminal string, which is an ambiguity witness.</p>
+              <p>Two leftmost derivations reach the same string.</p>
             </div> : <div className="ambiguity-clear">
               <strong>No witness found within the search bounds.</strong>
               <span>{model.ambiguity.explored} derivation states explored{model.ambiguity.truncated ? ' before the node limit.' : '.'}</span>
-              <small>This is not a proof that the grammar is unambiguous.</small>
+              <small>Not a proof of unambiguity.</small>
             </div>}
           </section>
 
           <section className="panel transform-panel">
-            <div className="panel-heading"><span>LEFT-RECURSION TRANSFORM</span><span>{model.leftRecursionFree ? 'AVAILABLE' : 'NOT REQUIRED'}</span></div>
+            <div className="panel-heading"><span>Left recursion</span><span>{model.leftRecursionFree ? 'Ready' : 'Not needed'}</span></div>
             {model.leftRecursionFree ? <>
               <div className="grammar-compare">
-                <div><small>BEFORE</small><pre>{grammarSource}</pre></div>
+                <div><small>Before</small><pre>{grammarSource}</pre></div>
                 <div className="transform-arrow">→</div>
-                <div><small>AFTER</small><pre>{grammarToSource(model.leftRecursionFree)}</pre></div>
+                <div><small>After</small><pre>{grammarToSource(model.leftRecursionFree)}</pre></div>
               </div>
               <button className="analysis-apply" onClick={() => onApplyGrammar(grammarToSource(model.leftRecursionFree!))}>Apply recursion-free grammar</button>
-            </> : <div className="analysis-clean"><span>✓</span><div><strong>No direct left recursion detected.</strong><small>The current grammar does not need this transformation.</small></div></div>}
+            </> : <div className="analysis-clean"><span>✓</span><div><strong>No direct left recursion detected.</strong></div></div>}
           </section>
 
           <section className="panel transform-panel">
-            <div className="panel-heading"><span>LEFT FACTORING</span><span>{model.factored ? `${model.factoring.length} OPPORTUNITY` : 'NOT REQUIRED'}</span></div>
+            <div className="panel-heading"><span>Left factoring</span><span>{model.factored ? `${model.factoring.length} found` : 'Not needed'}</span></div>
             {model.factored ? <>
               <div className="factoring-opportunities">
                 {model.factoring.map((item) => <code key={`${item.left}-${item.prefix}`}>{item.left}: prefix “{item.prefix}” groups {item.alternatives.join(' | ')}</code>)}
               </div>
               <div className="grammar-compare">
-                <div><small>BEFORE</small><pre>{grammarSource}</pre></div>
+                <div><small>Before</small><pre>{grammarSource}</pre></div>
                 <div className="transform-arrow">→</div>
-                <div><small>AFTER</small><pre>{grammarToSource(model.factored)}</pre></div>
+                <div><small>After</small><pre>{grammarToSource(model.factored)}</pre></div>
               </div>
               <button className="analysis-apply" onClick={() => onApplyGrammar(grammarToSource(model.factored!))}>Apply left-factored grammar</button>
-            </> : <div className="analysis-clean"><span>✓</span><div><strong>No common-prefix conflict detected.</strong><small>The current alternatives do not require left factoring.</small></div></div>}
+            </> : <div className="analysis-clean"><span>✓</span><div><strong>No common-prefix conflict detected.</strong></div></div>}
           </section>
         </div>
       </>}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { acceptanceName } from '../content'
 import { makeSnapshot, type WorkspaceSnapshot, type WorkspaceStateInput } from '../core/workspace/persistence'
 import { deleteSavedWorkspace, loadSavedWorkspaces, saveNamedWorkspace } from '../core/workspace/savedExamples'
 import { stackTraceExamples } from '../data/examples'
@@ -56,13 +57,13 @@ export function ExampleLibrary({ workspace, onLoad, onBack }: ExampleLibraryProp
     <section className="examples-workspace">
       <div className="examples-toolbar">
         <button onClick={onBack}>← Workspace</button>
-        <div><small>EXAMPLE LIBRARY</small><strong>Load a known language or save your current debugger state.</strong></div>
+        <div><strong>Examples</strong></div>
       </div>
 
       <section className="panel save-workspace-panel">
-        <div className="panel-heading"><span>SAVE CURRENT WORKSPACE</span><span>LOCAL TO THIS BROWSER</span></div>
+        <div className="panel-heading"><span>Save workspace</span></div>
         <div className="save-workspace-row">
-          <label><span>NAME</span><input value={name} maxLength={48} placeholder="e.g. My palindrome PDA" onChange={(event) => setName(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && saveCurrent()} /></label>
+          <label><span>Name</span><input value={name} maxLength={48} placeholder="e.g. My palindrome PDA" onChange={(event) => setName(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && saveCurrent()} /></label>
           <button className="primary-control" onClick={saveCurrent}>Save snapshot</button>
           {notice && <span className="save-notice" role="status">{notice}</span>}
         </div>
@@ -70,32 +71,32 @@ export function ExampleLibrary({ workspace, onLoad, onBack }: ExampleLibraryProp
 
       <div className="examples-grid">
         <section className="panel example-section">
-          <div className="panel-heading"><span>BUILT-IN GOLDEN EXAMPLES</span><span>{stackTraceExamples.length} VERIFIED</span></div>
+          <div className="panel-heading"><span>Built-in examples</span><span>{stackTraceExamples.length} verified</span></div>
           <div className="example-card-list">
             {stackTraceExamples.map((example, index) => (
               <article className="example-card" key={example.id}>
-                <div className="example-card-head"><div><small>{example.language}</small><strong>{example.title}</strong></div><span>{example.acceptanceMode === 'final-state' ? 'FINAL STATE' : 'EMPTY STACK'}</span></div>
+                <div className="example-card-head"><div><small>{example.language}</small><strong>{example.title}</strong></div><span>{acceptanceName(example.acceptanceMode)}</span></div>
                 <pre>{example.grammar}</pre>
                 <p>{example.lesson}</p>
-                <div className="example-samples"><span><small>ACCEPTS</small>{example.accepts.slice(0, 4).map((value) => <code key={`a-${value}`}>{value || 'ε'}</code>)}</span><span><small>REJECTS</small>{example.rejects.slice(0, 4).map((value) => <code key={`r-${value}`}>{value || 'ε'}</code>)}</span></div>
-                <button onClick={() => loadBuiltin(index)}>Load into debugger →</button>
+                <div className="example-samples"><span><small>Accepts</small>{example.accepts.slice(0, 4).map((value) => <code key={`a-${value}`}>{value || 'ε'}</code>)}</span><span><small>Rejects</small>{example.rejects.slice(0, 4).map((value) => <code key={`r-${value}`}>{value || 'ε'}</code>)}</span></div>
+                <button onClick={() => loadBuiltin(index)}>Load into debugger</button>
               </article>
             ))}
           </div>
         </section>
 
         <section className="panel example-section saved-section">
-          <div className="panel-heading"><span>MY SAVED WORKSPACES</span><span>{saved.length}/{24}</span></div>
+          <div className="panel-heading"><span>Saved</span><span>{saved.length}/{24}</span></div>
           {saved.length ? <div className="saved-list">
             {saved.map((item) => (
               <div className="saved-row" key={item.id}>
-                <div><strong>{item.name}</strong><small>{item.snapshot.grammar.split('\n')[0] || 'No grammar'} · {formatSavedTime(item.updatedAt)}</small></div>
-                <span>{item.snapshot.machine.states.length}S / {item.snapshot.machine.transitions.length}T</span>
+                <div><strong>{item.name}</strong><small>{item.snapshot.grammar.split('\n')[0] || 'No grammar'} ({formatSavedTime(item.updatedAt)})</small></div>
+                <span>{item.snapshot.machine.states.length} states, {item.snapshot.machine.transitions.length} edges</span>
                 <button onClick={() => onLoad(item.snapshot)}>Load</button>
                 <button className="danger-button" onClick={() => setSaved(deleteSavedWorkspace(item.id))}>Delete</button>
               </div>
             ))}
-          </div> : <div className="saved-empty"><strong>No named snapshots yet.</strong><span>Your normal workspace is already autosaved. Named saves are for alternate machines you want to keep.</span></div>}
+          </div> : <div className="saved-empty"><strong>No saved machines yet.</strong><span>Work autosaves. Name a snapshot to keep it.</span></div>}
         </section>
       </div>
     </section>

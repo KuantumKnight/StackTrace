@@ -163,8 +163,7 @@ html[data-theme="night"] body {
 
 .hero-copy p { max-width: 62ch; font-size: clamp(14px,1.25vw,17px); line-height: 1.75; }
 .eyebrow, .panel-heading, .rail-intro small, .hero-readout small, .configuration-focus small, .semantics-note small, .playback-heading small, .inspector-heading small {
-  letter-spacing: .11em;
-  text-transform: uppercase;
+  letter-spacing: .02em;
 }
 .brand-copy strong { font-weight: 800; letter-spacing: -.045em; }
 .brand-copy > span { letter-spacing: .02em; }
@@ -386,8 +385,7 @@ html[data-theme="night"] .tape-cell { color: #dce5ee; border-color: #303c4a; }
   border-top: 1px solid var(--exp-line);
   color: var(--exp-muted);
   font-size: 9px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: .02em;
 }
 
 .toast {
@@ -464,7 +462,7 @@ html[data-cursor-hover="true"] .custom-cursor { width: 36px; height: 36px; }
   margin: 18px auto 28px;
   padding: 24px 4px 4px;
   display: grid;
-  grid-template-columns: minmax(220px,1fr) auto minmax(260px,1fr);
+  grid-template-columns: minmax(220px,1fr) auto;
   align-items: center;
   gap: 18px;
   border-top: 1px solid var(--exp-line);
@@ -483,7 +481,6 @@ html[data-cursor-hover="true"] .custom-cursor { width: 36px; height: 36px; }
   font-size: 10px;
 }
 .global-footer button:hover { color: var(--exp-fg); background: color-mix(in srgb, var(--exp-panel-solid) 45%, transparent); box-shadow: none; }
-.footer-note { justify-self: end; text-align: right; max-width: 300px; line-height: 1.5; }
 
 /* Consistent micro-interaction system. */
 button, .panel, .stack-cell, .edge-label-chip, .state-group {
@@ -519,7 +516,6 @@ button:not(:disabled) { will-change: transform; }
   .back-to-top { right: 10px; bottom: 62px; }
   .global-footer { width: calc(100% - 20px); grid-template-columns: 1fr; gap: 12px; padding-top: 18px; }
   .global-footer nav { justify-content: flex-start; }
-  .footer-note { justify-self: start; text-align: left; }
   .command-palette footer { display: none; }
 }
 

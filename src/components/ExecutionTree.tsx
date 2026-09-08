@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { cap } from '../content'
 import { buildExecutionTree } from '../core/pda/executionTree'
 import type { AcceptanceMode, Configuration, PDA } from '../core/pda/types'
 import '../styles/tree-controls.css'
@@ -109,11 +110,11 @@ export function ExecutionTree({ machine, input, mode, onSelectPath }: ExecutionT
   return (
     <section className="panel execution-tree-panel" id="execution-tree">
       <div className="panel-heading">
-        <div><span>NPDA EXECUTION TREE</span><span className="heading-separator">/</span><span>{visibleSourceNodes.length}/{result.nodes.length} NODES</span></div>
+        <div><span>Execution tree</span></div>
         <div className="tree-tools">
           <button type="button" onClick={() => setShowDead((value) => !value)}>{showDead ? 'Hide dead' : 'Show dead'}</button>
           <button type="button" disabled={!acceptedNode} onClick={focusAcceptingPath}>Focus accept</button>
-          <span>{result.truncated ? 'BOUNDED' : 'COMPLETE'}</span>
+          <span>{visibleSourceNodes.length}/{result.nodes.length} nodes, {result.truncated ? 'bounded' : 'complete'}</span>
         </div>
       </div>
       <div className="execution-tree-scroller">
@@ -144,13 +145,13 @@ export function ExecutionTree({ machine, input, mode, onSelectPath }: ExecutionT
       </div>
       {selected && (
         <div className="tree-inspector" aria-live="polite" tabIndex={0}>
-          <span><small>NODE</small><b>{selected.id.toUpperCase()}</b></span>
-          <span><small>STATE</small><b>{selected.state}</b></span>
-          <span><small>UNREAD</small><b>{selected.unread}</b></span>
-          <span><small>STACK</small><b>{selected.stack}</b></span>
-          <span><small>STATUS</small><b className={selected.status}>{selected.status}</b></span>
-          {onSelectPath && <span><small>ACTION</small><b>CLICK = LOAD BRANCH</b></span>}
-          {selected.reason && <span className="tree-reason"><small>WHY</small><b>{selected.reason}</b></span>}
+          <span><small>Node</small><b>{selected.id.toUpperCase()}</b></span>
+          <span><small>State</small><b>{selected.state}</b></span>
+          <span><small>Unread</small><b>{selected.unread}</b></span>
+          <span><small>Stack</small><b>{selected.stack}</b></span>
+          <span><small>Status</small><b className={selected.status}>{cap(selected.status)}</b></span>
+          {onSelectPath && <span><small>Action</small><b>Click loads branch</b></span>}
+          {selected.reason && <span className="tree-reason"><small>Why</small><b>{selected.reason}</b></span>}
         </div>
       )}
     </section>

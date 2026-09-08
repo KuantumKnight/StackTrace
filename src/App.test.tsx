@@ -17,11 +17,11 @@ describe('StackTrace app integration', () => {
     render(<App />)
 
     await user.click(screen.getByRole('button', { name: 'Learn' }))
-    expect(screen.getByText('GUIDED CONCEPT PATH')).toBeTruthy()
-    expect(screen.getByText('PDA VS DFA')).toBeTruthy()
+    expect(screen.getByText('Concepts')).toBeTruthy()
+    expect(screen.getByText('PDA vs DFA')).toBeTruthy()
 
     await user.click(screen.getByRole('button', { name: /Open examples/i }))
-    expect(screen.getByText('BUILT-IN GOLDEN EXAMPLES')).toBeTruthy()
+    expect(screen.getByText('Built-in examples')).toBeTruthy()
     expect(screen.getByText('Balanced Parentheses')).toBeTruthy()
     expect(screen.getByText('Even Palindromes')).toBeTruthy()
   })
@@ -31,7 +31,7 @@ describe('StackTrace app integration', () => {
     render(<App />)
 
     await user.click(screen.getByRole('button', { name: 'Build' }))
-    expect(screen.getByText(/PDA WORKBENCH/)).toBeTruthy()
+    expect(screen.getByText(/PDA workbench/)).toBeTruthy()
     expect(screen.getByText(/Shape the machine/)).toBeTruthy()
     expect(screen.getByRole('toolbar', { name: 'Canvas tools' })).toBeTruthy()
     expect(screen.getByLabelText('Initial stack symbol')).toBeTruthy()
@@ -47,7 +47,7 @@ describe('StackTrace app integration', () => {
     expect(back.disabled).toBe(true)
     expect(forward.disabled).toBe(true)
 
-    await user.click(screen.getByRole('button', { name: 'Step →' }))
+    await user.click(screen.getByRole('button', { name: 'Step' }))
     expect(back.disabled).toBe(false)
 
     await user.click(back)
@@ -67,19 +67,19 @@ describe('StackTrace app integration', () => {
     await user.type(input, 'aabbb')
     await user.click(screen.getByRole('button', { name: /Load input/i }))
 
-    const step = screen.getByRole('button', { name: 'Step →' })
+    const step = screen.getByRole('button', { name: 'Step' })
     for (let index = 0; index < 7; index += 1) fireEvent.click(step)
 
-    expect(screen.getByText('BRANCH TERMINATED')).toBeTruthy()
-    expect(screen.getByText(/Rejected: every explored computation terminates/)).toBeTruthy()
-    expect(screen.getByText('CLOSEST BRANCH')).toBeTruthy()
+    expect(screen.getByText('Branch ended')).toBeTruthy()
+    expect(screen.getByText(/Rejected: every branch ends/)).toBeTruthy()
+    expect(screen.getByText('Closest branch')).toBeTruthy()
   })
 
   it('exposes all seven repair levels', async () => {
     const user = userEvent.setup()
     render(<App />)
     await user.click(screen.getByRole('button', { name: 'Challenges' }))
-    expect(screen.getByText('7 LEVELS')).toBeTruthy()
+    expect(screen.getByText('7 levels')).toBeTruthy()
     expect(screen.getByText(/Bad Terminal Matcher/)).toBeTruthy()
   })
 })

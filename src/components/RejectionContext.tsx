@@ -25,7 +25,7 @@ function mismatchReason(transition: PDATransition, config: Configuration) {
   if (!isEpsilon(transition.stackTop) && transition.stackTop !== stackTop) {
     reasons.push(`needs stack ${transition.stackTop}; top is ${stackTop ?? 'ε'}`)
   }
-  return reasons.join(' · ') || 'transition should be enabled'
+  return reasons.join('; ') || 'transition should be enabled'
 }
 
 export function RejectionContext({ machine, config }: RejectionContextProps) {
@@ -34,8 +34,8 @@ export function RejectionContext({ machine, config }: RejectionContextProps) {
   return (
     <div className="rejection-context">
       <div className="rejection-context-head">
-        <small>BLOCKING CONTEXT</small>
-        <span>{outgoing.length} outgoing transition{outgoing.length === 1 ? '' : 's'} inspected</span>
+        <small>Why it&apos;s blocked</small>
+        <span>{outgoing.length} outgoing</span>
       </div>
       {outgoing.length ? <div className="blocked-transition-list">
         {outgoing.slice(0, 8).map((transition) => (

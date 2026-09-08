@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { cap } from '../content'
 import { cfgToPda } from '../core/cfg/cfgToPda'
 import { parseGrammar } from '../core/cfg/grammarParser'
 import { buildExecutionTree } from '../core/pda/executionTree'
@@ -57,20 +58,20 @@ export function ConversionExplorer({ grammarSource, target, onBack, onUseMachine
     <section className="conversion-workspace">
       <div className="conversion-toolbar">
         <button onClick={onBack}>← Workspace</button>
-        <div className="conversion-title"><small>CONSTRUCTION</small><strong>CFG → PDA</strong></div>
+        <div className="conversion-title"><strong>CFG → PDA</strong></div>
         <div className={`conversion-verdict ${model.acceptsTarget ? 'pass' : 'fail'}`}>
-          <small>BOUNDED VERIFY · {target || 'ε'}</small>
-          <strong>{model.acceptsTarget ? 'ACCEPT PATH FOUND' : model.search.truncated ? 'NO PATH WITHIN LIMIT' : 'REJECTED'}</strong>
+          <small>Target {target || 'ε'}</small>
+          <strong>{model.acceptsTarget ? 'Accepts' : model.search.truncated ? 'No path in limit' : 'Rejects'}</strong>
         </div>
-        <button className="use-machine-button" onClick={() => onUseMachine(machine)}>Open generated PDA →</button>
+        <button className="use-machine-button" onClick={() => onUseMachine(machine)}>Open generated PDA</button>
       </div>
 
       <div className="conversion-grid">
         <aside className="panel construction-steps-panel">
-          <div className="panel-heading"><div><span>CONSTRUCTION RULES</span><span className="heading-separator">/</span><span>{steps.length} STEPS</span></div></div>
+          <div className="panel-heading"><div><span>Steps</span></div><span>{steps.length} rules</span></div>
           <button className={`construction-step intro ${stepIndex === 0 ? 'selected' : ''}`} onClick={() => setStepIndex(0)}>
             <span className="construction-index">00</span>
-            <span><b>Source grammar</b><small>Start from the CFG definition.</small></span>
+            <span><b>Source grammar</b><small>Original grammar.</small></span>
           </button>
           {steps.map((step, index) => (
             <button key={step.id} className={`construction-step ${step.kind} ${stepIndex === index + 1 ? 'selected' : ''} ${stepIndex < index + 1 ? 'future' : ''}`} onClick={() => setStepIndex(index + 1)}>
@@ -84,17 +85,17 @@ export function ConversionExplorer({ grammarSource, target, onBack, onUseMachine
           <MachineView machine={visibleMachine} activeState={activeTransition?.from || 'qInit'} activeTransitionId={activeTransitionId} />
 
           <section className="panel construction-inspector">
-            <div className="panel-heading"><div><span>WHY THIS EDGE EXISTS</span><span className="heading-separator">/</span><span>STEP {stepIndex}</span></div><span>{activeStep?.kind.toUpperCase() || 'SOURCE CFG'}</span></div>
+            <div className="panel-heading"><div><span>Step {stepIndex}</span></div><span>{activeStep ? cap(activeStep.kind) : 'Source'}</span></div>
             {activeStep ? (
               <div className="construction-explanation">
-                <div className="construction-rule-code"><small>PDA TRANSITION</small><strong>{activeStep.rule}</strong></div>
-                <div><small>MEANING</small><p>{activeStep.explanation}</p></div>
+                <div className="construction-rule-code"><small>Transition</small><strong>{activeStep.rule}</strong></div>
+                <div><small>Why</small><p>{activeStep.explanation}</p></div>
               </div>
             ) : (
               <div className="construction-source">
-                <small>GRAMMAR</small>
+                <small>Grammar</small>
                 <pre>{grammarSource}</pre>
-                <p>The construction will use a bottom-of-stack marker, push <b>{model.grammar.startSymbol}</b>, encode every production as an ε-transition, then add terminal-matching transitions.</p>
+                <p>Adds a bottom marker, pushes <b>{model.grammar.startSymbol}</b>, encodes each production, then matches terminals.</p>
               </div>
             )}
             <div className="construction-controls">

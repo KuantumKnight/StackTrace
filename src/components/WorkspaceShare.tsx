@@ -30,7 +30,7 @@ export function WorkspaceShare({ workspace, onImport, onBack }: WorkspaceSharePr
       if (!maybeUrl) throw new Error('No workspace payload was found.')
       const snapshot = decodeWorkspace(maybeUrl)
       onImport(snapshot)
-      setMessage('Workspace imported and loaded into the debugger.')
+      setMessage('Workspace imported.')
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not import this workspace.')
     }
@@ -40,29 +40,29 @@ export function WorkspaceShare({ workspace, onImport, onBack }: WorkspaceSharePr
     <section className="share-workspace">
       <div className="share-toolbar">
         <button onClick={onBack}>← Workspace</button>
-        <div><small>PORTABLE WORKSPACE</small><strong>Autosave · share link · deterministic import</strong></div>
+        <div><strong>Share</strong></div>
       </div>
 
       <div className="share-grid">
         <section className="panel share-panel">
-          <div className="panel-heading"><span>SHARE LINK</span><span>NO BACKEND REQUIRED</span></div>
+          <div className="panel-heading"><span>Share link</span></div>
           <div className="share-body">
-            <p>The link stores only the grammar, PDA definition, current input, acceptance mode and active challenge. Execution history is recomputed locally.</p>
+            <p>Link includes the machine and input.</p>
             <label><span>URL</span><textarea readOnly value={link} onFocus={(event) => event.currentTarget.select()} /></label>
             <div className="share-actions"><button className="primary-control" onClick={copyLink}>Copy share link</button></div>
           </div>
         </section>
 
         <section className="panel share-panel">
-          <div className="panel-heading"><span>IMPORT WORKSPACE</span><span>VERSIONED PAYLOAD</span></div>
+          <div className="panel-heading"><span>Import</span></div>
           <div className="share-body">
-            <p>Paste either a StackTrace share URL or the raw encoded payload. Invalid or incompatible data is rejected before it reaches the simulator.</p>
-            <label><span>PASTE URL OR PAYLOAD</span><textarea value={importText} onChange={(event) => setImportText(event.target.value)} placeholder={payload.slice(0, 72) + '…'} /></label>
+            <p>Paste a share link or payload.</p>
+            <label><span>Paste link or payload</span><textarea value={importText} onChange={(event) => setImportText(event.target.value)} placeholder={payload.slice(0, 72) + '…'} /></label>
             <div className="share-actions"><button className="primary-control" disabled={!importText.trim()} onClick={importPayload}>Import and load</button></div>
           </div>
         </section>
       </div>
-      <div className="share-payload"><small>CURRENT PAYLOAD</small><code>{payload}</code></div>
+      <div className="share-payload"><small>Payload</small><code>{payload}</code></div>
       {message && <div className="share-message" role="status">{message}</div>}
     </section>
   )
