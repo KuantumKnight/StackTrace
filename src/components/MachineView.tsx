@@ -55,6 +55,8 @@ function transitionLabel(transition: PDATransition) {
   return `${transition.input || 'ε'}, ${transition.stackTop || 'ε'} → ${transition.replacement || 'ε'}`
 }
 
+const radarStyle = { transformBox: 'fill-box', transformOrigin: 'center' } as const
+
 export function MachineView({ machine, activeState, activeTransitionId }: MachineViewProps) {
   const [zoom, setZoom] = useState(1)
   const edges = useMemo(() => machine.transitions.map((transition, index) => buildEdge(machine, transition, index)), [machine])
@@ -105,8 +107,8 @@ export function MachineView({ machine, activeState, activeTransitionId }: Machin
               return (
                 <g className={`state-group ${active ? 'active' : ''}`} key={state.id} transform={`translate(${state.x} ${state.y})`}>
                   {state.initial && <path className="initial-arrow" d="M -68 0 L -43 0" markerEnd="url(#arrow)" />}
-                  {active && <circle className="state-radar radar-two" r="50" />}
-                  {active && <circle className="state-radar" r="44" />}
+                  {active && <circle className="state-radar radar-two" r="50" style={radarStyle} />}
+                  {active && <circle className="state-radar" r="44" style={radarStyle} />}
                   <circle className={`state ${active ? 'active' : ''}`} r="35" filter={active ? 'url(#nodeGlow)' : undefined} />
                   {state.accepting && <circle className="state-inner" r="28" />}
                   <text className="state-label" y="5" textAnchor="middle">{state.name}</text>
