@@ -5,7 +5,7 @@
   --fluid-node-stroke: #3156c8;
   --fluid-active-fill: #e7ecfb;
   --fluid-accepting: #0d766f;
-  --fluid-halo: rgba(13,118,111,.28);
+  --fluid-halo: #0d766f;
   --fluid-pulse: #54d8cd;
   --fluid-initial: #7b8593;
   position: relative;
@@ -15,6 +15,7 @@
   min-height: 250px;
   overflow: visible;
   contain: layout paint;
+  touch-action: pan-y;
 }
 
 html[data-theme='glass'] .fluid-machine-viewport {
@@ -24,7 +25,7 @@ html[data-theme='glass'] .fluid-machine-viewport {
   --fluid-node-stroke: #5074dc;
   --fluid-active-fill: #eaf1ff;
   --fluid-accepting: #2baea5;
-  --fluid-halo: rgba(60,200,189,.3);
+  --fluid-halo: #3cc8bd;
   --fluid-pulse: #9ffaf2;
   --fluid-initial: #74859a;
 }
@@ -36,7 +37,7 @@ html[data-theme='night'] .fluid-machine-viewport {
   --fluid-node-stroke: #7c9cff;
   --fluid-active-fill: #14263a;
   --fluid-accepting: #53c9bd;
-  --fluid-halo: rgba(83,201,189,.34);
+  --fluid-halo: #53c9bd;
   --fluid-pulse: #b5fff9;
   --fluid-initial: #71839a;
 }
@@ -49,6 +50,7 @@ html[data-theme='night'] .fluid-machine-viewport {
   will-change: transform;
 }
 
+.fluid-pixi-host,
 .fluid-machine-canvas,
 .fluid-graph-overlay {
   position: absolute;
@@ -57,9 +59,28 @@ html[data-theme='night'] .fluid-machine-viewport {
   height: 100%;
 }
 
+.fluid-pixi-host {
+  z-index: 1;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.fluid-pixi-canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none;
+}
+
 .fluid-machine-canvas {
+  z-index: 0;
   display: block;
   pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.fluid-machine-viewport[data-renderer='pixi-webgl'] .fluid-machine-canvas {
+  opacity: 0;
 }
 
 .fluid-graph-overlay {
@@ -82,7 +103,8 @@ html[data-theme='night'] .fluid-machine-viewport {
   font: 680 10.5px/1.15 ui-monospace, SFMono-Regular, Menlo, monospace;
   text-align: center;
   white-space: nowrap;
-  transition: left 260ms cubic-bezier(.2,.8,.2,1), top 260ms cubic-bezier(.2,.8,.2,1), border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease, opacity 160ms ease;
+  will-change: left, top;
 }
 
 .fluid-edge-label.active,
@@ -124,7 +146,8 @@ html[data-theme='night'] .fluid-machine-viewport {
   gap: 43px;
   color: var(--ink);
   text-align: center;
-  transition: left 260ms cubic-bezier(.2,.8,.2,1), top 260ms cubic-bezier(.2,.8,.2,1), color 150ms ease;
+  transition: color 150ms ease, opacity 160ms ease;
+  will-change: left, top;
 }
 
 .fluid-state-copy strong {
@@ -140,6 +163,27 @@ html[data-theme='night'] .fluid-machine-viewport {
 }
 
 .fluid-state-copy.active strong { color: var(--signal); }
+
+.fluid-renderer-badge {
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  z-index: 4;
+  padding: 3px 6px;
+  border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
+  border-radius: 5px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  font: 800 7px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .11em;
+  opacity: .72;
+  pointer-events: none;
+}
+
+.fluid-machine-viewport[data-renderer='pixi-webgl'] .fluid-renderer-badge {
+  color: var(--signal);
+  border-color: color-mix(in srgb, var(--signal) 28%, var(--line));
+}
 
 .fluid-graph-semantics {
   position: absolute !important;
@@ -192,11 +236,13 @@ html[data-theme='night'] .fluid-machine-viewport {
   .fluid-state-copy strong { font-size: 10.5px; }
   .fluid-state-copy small { font-size: 7px; }
   .challenge-machine-shell .machine-canvas { min-height: 320px; }
+  .fluid-renderer-badge { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .fluid-machine-scene,
   .fluid-edge-label,
   .fluid-loop-label,
-  .fluid-state-copy { transition: none !important; }
+  .fluid-state-copy,
+  .fluid-machine-canvas { transition: none !important; }
 }
