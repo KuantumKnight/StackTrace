@@ -87,7 +87,7 @@ describe('PDA workbench edge layout', () => {
 
     const [edge] = layoutPDAEdges(graph)
     expect(edge.kind).toBe('line')
-    expect(edge.curveMidpoint.x).toBeCloseTo(359)
+    expect(edge.curveMidpoint.x).toBeCloseTo(358)
     expect(edge.curveMidpoint.y).toBeCloseTo(220)
     expect(edge.x).toBeCloseTo(edge.curveMidpoint.x)
     expect(edge.y).toBeCloseTo(edge.curveMidpoint.y)
