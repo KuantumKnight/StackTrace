@@ -12,7 +12,7 @@ export interface Grammar {
 
 function normalizeAlternative(value: string) {
   const compact = value.replace(/\s+/g, '')
-  if (!compact || compact === 'ε' || compact === 'λ' || /^(epsilon|eps)$/i.test(compact)) return 'ε'
+  if (!compact || compact === 'ε' || compact === 'λ' || /^(epsilon|eps|lambda)$/i.test(compact)) return 'ε'
   return compact
 }
 
