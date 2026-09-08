@@ -1,7 +1,13 @@
 import { useMemo } from 'react'
 import { parseGrammar } from '../core/cfg/grammarParser'
 
-export function CFGEditor({ value, onChange }: { value: string; onChange: (next: string) => void }) {
+interface CFGEditorProps {
+  value: string
+  onChange: (next: string) => void
+  onBuild?: () => void
+}
+
+export function CFGEditor({ value, onChange, onBuild }: CFGEditorProps) {
   const result = useMemo(() => {
     try { return { grammar: parseGrammar(value), error: '' } }
     catch (error) { return { grammar: null, error: error instanceof Error ? error.message : 'Invalid grammar' } }
@@ -18,6 +24,12 @@ export function CFGEditor({ value, onChange }: { value: string; onChange: (next:
           <span>Terminals: {result.grammar?.terminals.join(', ') || 'None'}</span>
         </>}
       </div>
+      {onBuild && (
+        <div className="grammar-build-row">
+          <span>Grammar text and the current PDA are separate until you build.</span>
+          <button className="grammar-build-button" type="button" disabled={Boolean(result.error)} onClick={onBuild}>Build PDA from CFG →</button>
+        </div>
+      )}
     </section>
   )
 }
