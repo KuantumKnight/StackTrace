@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { createState, createTransition, validatePDA } from '../core/pda/editor'
 import type { PDA, PDAState, PDATransition } from '../core/pda/types'
+import { layoutPDAEdges } from './pdaEditorLayout'
 import '../styles/pdaEditor.css'
 
 interface PDAEditorProps {
@@ -18,41 +19,6 @@ const MAX_ZOOM = 1.5
 
 function label(transition: PDATransition) {
   return `${transition.input || 'ε'}, ${transition.stackTop || 'ε'} → ${transition.replacement || 'ε'}`
-}
-
-/** Chip is sized to the label so long rules like `a, XZ → bXZ` never clip. */
-function chipWidth(text: string) {
-  return Math.max(96, text.length * 6.9 + 18)
-}
-
-function edgeGeometry(machine: PDA, transition: PDATransition, index: number) {
-  const from = machine.states.find((state) => state.id === transition.from)
-  const to = machine.states.find((state) => state.id === transition.to)
-  if (!from || !to) return null
-
-  if (from.id === to.id) {
-    return {
-      d: `M ${from.x - 22} ${from.y - 26} C ${from.x - 76} ${from.y - 92 - index * 3}, ${from.x + 76} ${from.y - 92 - index * 3}, ${from.x + 22} ${from.y - 26}`,
-      x: from.x,
-      y: from.y - 78 - index * 3,
-    }
-  }
-
-  const dx = to.x - from.x
-  const dy = to.y - from.y
-  const length = Math.max(Math.hypot(dx, dy), 1)
-  const ux = dx / length
-  const uy = dy / length
-  const bend = (index % 3 - 1) * 15
-  const nx = -uy * bend
-  const ny = ux * bend
-  const sx = from.x + ux * 38
-  const sy = from.y + uy * 38
-  const ex = to.x - ux * 42
-  const ey = to.y - uy * 42
-  const mx = (sx + ex) / 2 + nx
-  const my = (sy + ey) / 2 + ny
-  return { d: `M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`, x: mx, y: my - 10 }
 }
 
 function normalizeSymbol(value: string) {
@@ -72,6 +38,10 @@ export function PDAEditor({ machine, onChange, onBack }: PDAEditorProps) {
   const errorCount = diagnostics.filter((item) => item.level === 'error').length
   const warningCount = diagnostics.filter((item) => item.level === 'warning').length
   const acceptingCount = machine.states.filter((state) => state.accepting).length
+  const edgeLayouts = useMemo(
+    () => new Map(layoutPDAEdges(machine, WIDTH, HEIGHT).map((layout) => [layout.transitionId, layout])),
+    [machine],
+  )
 
   const patchState = (id: string, patch: Partial<PDAState>) => {
     onChange({ ...machine, states: machine.states.map((state) => state.id === id ? { ...state, ...patch } : state) })
@@ -271,12 +241,12 @@ export function PDAEditor({ machine, onChange, onBack }: PDAEditorProps) {
               </defs>
 
               <g className="builder-scene" style={{ transform: `translate(${WIDTH / 2}px, ${HEIGHT / 2}px) scale(${zoom}) translate(${-WIDTH / 2}px, ${-HEIGHT / 2}px)` }}>
-                {machine.transitions.map((transition, index) => {
-                  const geometry = edgeGeometry(machine, transition, index)
+                {machine.transitions.map((transition) => {
+                  const geometry = edgeLayouts.get(transition.id)
                   if (!geometry) return null
                   const selected = selectedTransition?.id === transition.id
                   const text = label(transition)
-                  const width = chipWidth(text)
+                  const width = geometry.width
                   return (
                     <g key={transition.id} className={`designer-edge ${selected ? 'selected' : ''}`} onClick={() => { setSelectedTransitionId(transition.id); setSelectedStateId(transition.from) }}>
                       <path className="designer-edge-hit" d={geometry.d} />
