@@ -24,8 +24,7 @@ describe('real classroom CFG payloads', () => {
 
   it('normalizes spaced productions and common epsilon spellings', () => {
     expect(parseGrammar('S -> ( S ) S | ε').productions[0].right).toEqual(['(S)S', 'ε'])
-    expect(parseGrammar('S -> a S b | lambda\nA -> a')).toThrow
-    expect(parseGrammar('S -> a S b | lambda').productions[0].right).toEqual(['aSb', 'lambda'])
+    expect(parseGrammar('S -> a S b | lambda').productions[0].right).toEqual(['aSb', 'ε'])
     expect(parseGrammar('S -> a S b | epsilon').productions[0].right).toEqual(['aSb', 'ε'])
     expect(parseGrammar('S -> a S b | eps').productions[0].right).toEqual(['aSb', 'ε'])
     expect(parseGrammar('S -> a S b | λ').productions[0].right).toEqual(['aSb', 'ε'])
