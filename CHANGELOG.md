@@ -2,6 +2,22 @@
 
 All notable StackTrace release changes are documented here.
 
+## 1.1.0 — 2026-09-08
+
+### Studio v2 frontend
+- Rebuilt the debugger around a progressive learning sequence: define → trace → memory → explain
+- Promoted the PDA state graph to the primary visual surface instead of treating every telemetry region equally
+- Reorganized navigation around student intent: Debug, Learn, Build, Practice, and More
+- Replaced the always-visible telemetry wall with selectable Trace, Execution Tree, and Stack Depth inspector lenses
+- Moved input and acceptance-mode setup next to the grammar rather than burying them in a lower dashboard
+- Added a compact live configuration summary with exact terminology such as Valid Moves and Branch Dead
+- Made simulator status contextual to the debugger instead of global across unrelated screens
+- Introduced a restrained engineering-notebook visual system with warm paper surfaces, ink, cobalt action, and teal computation states
+- Reworked responsive behavior so tablet and mobile follow task order instead of shrinking the desktop dashboard
+- Removed retired `signal-lab.css` and `release-polish.css` theme layers
+- Preserved keyboard time travel, reduced-motion support, focus states, rejection diagnostics, and existing simulator behavior
+- Updated integration tests to target the explicit playback controls in the redesigned workspace
+
 ## 1.0.0 — 2026-09-07
 
 ### CFG
