@@ -1,4 +1,4 @@
-import { initialConfiguration, nextConfigurations } from './simulator'
+import { allNextConfigurations, initialConfiguration } from './simulator'
 import type { AcceptanceMode, Configuration, PDA } from './types'
 
 export interface ExecutionTreeNode {
@@ -55,7 +55,7 @@ export function buildExecutionTree(
       continue
     }
 
-    const children = nextConfigurations(machine, node.config, mode, counter)
+    const children = allNextConfigurations(machine, node.config, mode, counter)
     for (const rawChild of children) {
       if (nodes.length >= maxNodes) {
         truncated = true
