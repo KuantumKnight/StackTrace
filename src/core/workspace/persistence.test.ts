@@ -27,7 +27,7 @@ describe('workspace serialization', () => {
   })
 
   it('rejects structurally malformed machines before they reach the app', () => {
-    const malformed = encodeWorkspace({
+    expect(() => encodeWorkspace({
       grammar: 'S -> a',
       input: 'a',
       acceptanceMode: 'final-state',
@@ -37,13 +37,11 @@ describe('workspace serialization', () => {
         startState: 'q0',
         initialStackSymbol: 'Z',
       },
-    } as never)
-
-    expect(() => decodeWorkspace(malformed)).toThrow(/valid StackTrace workspace/)
+    } as never)).toThrow(/invalid StackTrace workspace/)
   })
 
   it('rejects machine references to missing or duplicate states', () => {
-    const malformed = encodeWorkspace({
+    expect(() => encodeWorkspace({
       grammar: 'S -> a',
       input: 'a',
       acceptanceMode: 'final-state',
@@ -56,9 +54,7 @@ describe('workspace serialization', () => {
         startState: 'q0',
         initialStackSymbol: 'Z',
       },
-    } as never)
-
-    expect(() => decodeWorkspace(malformed)).toThrow(/valid StackTrace workspace/)
+    } as never)).toThrow(/invalid StackTrace workspace/)
   })
 
   it('rejects oversized share payloads before decoding', () => {

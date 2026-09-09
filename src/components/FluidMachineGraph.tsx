@@ -304,7 +304,10 @@ export function FluidMachineGraph({ machine, activeState, activeTransitionId, an
     viewport.addEventListener('pointerleave', pointerLeave)
 
     const draw = (now: number) => {
-      if (disposed) return
+      if (disposed || document.hidden) {
+        frame = 0
+        return
+      }
       const deltaFrames = Math.max(.2, Math.min(2.4, (now - previousNow) / (1000 / 60)))
       previousNow = now
       const liveMachine = machineRef.current
@@ -520,10 +523,15 @@ export function FluidMachineGraph({ machine, activeState, activeTransitionId, an
       frame = window.requestAnimationFrame(draw)
     }
 
+    const onVisibilityChange = () => {
+      if (!document.hidden && !disposed && !reducedMotion && !frame) frame = window.requestAnimationFrame(draw)
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
     frame = window.requestAnimationFrame(draw)
     return () => {
       disposed = true
       window.cancelAnimationFrame(frame)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
       runtimeScript?.removeEventListener('load', startPixi)
       viewport.removeEventListener('pointermove', pointerMove)
       viewport.removeEventListener('pointerleave', pointerLeave)

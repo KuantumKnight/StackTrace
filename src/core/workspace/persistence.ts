@@ -143,7 +143,11 @@ function base64UrlToBytes(value: string) {
 }
 
 export function encodeWorkspace(input: WorkspaceStateInput) {
-  const json = JSON.stringify(makeSnapshot(input))
+  const snapshot = makeSnapshot(input)
+  if (!isWorkspaceSnapshot(snapshot)) {
+    throw new Error('Cannot encode an invalid StackTrace workspace.')
+  }
+  const json = JSON.stringify(snapshot)
   return bytesToBase64Url(new TextEncoder().encode(json))
 }
 
