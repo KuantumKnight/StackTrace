@@ -35,7 +35,7 @@ describe('StackTrace app integration', () => {
 
     await user.click(screen.getByRole('button', { name: 'Build' }))
     expect(screen.getByText(/PDA WORKBENCH/)).toBeTruthy()
-    expect(screen.getByRole('heading', { name: 'PDA workbench' })).toBeTruthy()
+    expect(screen.getByText(/Shape the machine/)).toBeTruthy()
     expect(screen.getByRole('toolbar', { name: 'Canvas tools' })).toBeTruthy()
     expect(screen.getByLabelText('Initial stack symbol')).toBeTruthy()
     expect(screen.getByRole('button', { name: /Debug machine/i })).toBeTruthy()

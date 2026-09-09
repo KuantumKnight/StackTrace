@@ -167,7 +167,8 @@ export function PDAEditor({ machine, onChange, onBack }: PDAEditorProps) {
 
         <div className="builder-hero-row">
           <div className="builder-title-block">
-            <h1>PDA workbench</h1>
+            <h1>Shape the machine, <em>then prove it.</em></h1>
+            <p>Drag states, author transitions, validate the structure, and hand the exact machine back to the debugger.</p>
           </div>
 
           <div className="builder-primary-actions">

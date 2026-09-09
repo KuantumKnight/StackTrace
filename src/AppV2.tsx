@@ -55,7 +55,7 @@ function statusLabel(status: Configuration['status']) {
   if (status === 'dead') return 'BRANCH DEAD'
   if (status === 'limit') return 'SEARCH LIMIT'
   if (status === 'merged') return 'BRANCH MERGED'
-  return 'ACTIVE'
+  return 'READY'
 }
 
 export default function AppV2() {
@@ -308,7 +308,7 @@ export default function AppV2() {
       <header className="topbar studio-topbar">
         <button className="brand-block brand-button" type="button" onClick={() => setView('workspace')} aria-label="Open StackTrace debugger">
           <span className="brand-mark" aria-hidden="true"><span /></span>
-          <span className="brand-copy"><strong>StackTrace</strong></span>
+          <span className="brand-copy"><strong>StackTrace</strong><span>Formal language debugger</span></span>
         </button>
 
         <div className="nav-cluster">
@@ -339,9 +339,9 @@ export default function AppV2() {
           </div>
         </div>
 
-        {view === 'workspace' ? current.status !== 'active' ? (
+        {view === 'workspace' ? (
           <div className={`status-badge ${current.status}`}><span className="status-light" />{statusLabel(current.status)}</div>
-        ) : null : (
+        ) : (
           <button className="return-debugger" onClick={() => setView('workspace')}>Back to debugger</button>
         )}
       </header>
@@ -377,10 +377,13 @@ export default function AppV2() {
           <>
             <section className="workspace-hero" aria-live="polite">
               <div className="hero-copy">
-                <h1>PDA debugger</h1>
+                <div className="eyebrow"><span className={`pulse ${running ? 'running' : ''}`} />LIVE TRACE · aⁿbⁿ</div>
+                <h1>See exactly why a PDA accepts a string.</h1>
+                <p>For the sample grammar, every <code>a</code> stores work on the stack and every <code>b</code> removes it. Step through the machine and watch the proof happen.</p>
                 <div className="hero-actions">
                   <button className="hero-run" onClick={() => setRunning((value) => !value)} disabled={!runAvailable}>{running ? 'Pause trace' : 'Run trace'}</button>
                   <button onClick={step} disabled={!runAvailable}>Step once →</button>
+                  <button className="quiet-action" onClick={() => setView('learn')}>Explain the concept</button>
                 </div>
               </div>
               <div className="hero-readout" aria-label="Current PDA configuration summary">
@@ -392,9 +395,19 @@ export default function AppV2() {
               </div>
             </section>
 
+            <section className="learning-thread" aria-label="Debugger learning sequence">
+              <span><b>01</b> Define the language</span>
+              <i aria-hidden="true">→</i>
+              <span><b>02</b> Trace the state graph</span>
+              <i aria-hidden="true">→</i>
+              <span><b>03</b> Watch stack memory</span>
+              <i aria-hidden="true">→</i>
+              <span><b>04</b> Explain the outcome</span>
+            </section>
+
             <div className="workspace-stage">
               <aside className="setup-rail">
-                <div className="rail-intro"><span>01</span><div><small>LANGUAGE</small></div></div>
+                <div className="rail-intro"><span>01</span><div><small>LANGUAGE</small><strong>Define what should be recognized.</strong></div></div>
                 <CFGEditor value={grammar} onChange={setGrammar} onBuild={buildPdaFromGrammar} />
 
                 <section className="panel input-setup-panel">
@@ -413,12 +426,12 @@ export default function AppV2() {
               </aside>
 
               <section className="machine-stage">
-                <div className="rail-intro machine-intro"><span>02</span><div><small>STATE GRAPH</small></div></div>
+                <div className="rail-intro machine-intro"><span>02</span><div><small>STATE GRAPH</small><strong>Follow the active transition.</strong></div></div>
                 <MachineView machine={machine} activeState={current.state} activeTransitionId={current.transitionId} />
               </section>
 
               <aside className="memory-rail">
-                <div className="rail-intro"><span>03</span><div><small>MEMORY</small></div></div>
+                <div className="rail-intro"><span>03</span><div><small>MEMORY</small><strong>Watch the stack explain context.</strong></div></div>
                 <StackView stack={current.stack} previousStack={previous.stack} />
 
                 <section className="panel configuration-card">
@@ -440,7 +453,7 @@ export default function AppV2() {
 
             <section className="panel playback-dock">
               <div className="playback-heading">
-                <div><small>04 · PLAYBACK</small></div>
+                <div><small>04 · PLAYBACK</small><strong>Move through configurations without losing history.</strong></div>
                 <span>Space step · Shift+Space run · Alt+←/→ time travel</span>
               </div>
               <InputTape input={current.input} inputIndex={current.inputIndex} />
@@ -483,7 +496,7 @@ export default function AppV2() {
 
             <section className="panel inspector-shell" id="workspace-inspector">
               <div className="inspector-heading">
-                <div><small>DEEP INSPECTION</small></div>
+                <div><small>DEEP INSPECTION</small><strong>Open one lens at a time.</strong></div>
                 <div className="inspector-tabs" role="tablist" aria-label="Debugger inspection views">
                   <button id="inspector-tab-trace" role="tab" aria-selected={inspectorView === 'trace'} aria-controls="inspector-panel" className={inspectorView === 'trace' ? 'selected' : ''} onClick={() => setInspectorView('trace')}>Trace</button>
                   <button id="inspector-tab-tree" role="tab" aria-selected={inspectorView === 'tree'} aria-controls="inspector-panel" className={inspectorView === 'tree' ? 'selected' : ''} onClick={() => setInspectorView('tree')}>Execution tree</button>

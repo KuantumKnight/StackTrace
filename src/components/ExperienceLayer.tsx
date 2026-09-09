@@ -150,7 +150,7 @@ export function ExperienceLayer() {
           <section className="command-palette" role="dialog" aria-modal="true" aria-label="Command palette">
             <div className="command-search">
               <SearchIcon />
-              <input ref={paletteInputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search commands…" aria-label="Search commands" />
+              <input ref={paletteInputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Jump to a StackTrace tool…" aria-label="Search commands" />
               <kbd>ESC</kbd>
             </div>
             <div className="command-list">
@@ -161,11 +161,23 @@ export function ExperienceLayer() {
               ))}
               {!filteredCommands.length && <p>No matching command.</p>}
             </div>
-            <footer><span>Ctrl/⌘ K</span></footer>
+            <footer><span>StackTrace command center</span><span>Ctrl/⌘ K anywhere</span></footer>
           </section>
         </div>
       )}
 
+      <footer className="global-footer">
+        <div>
+          <strong>StackTrace</strong>
+          <span>CFG + PDA visual debugger</span>
+        </div>
+        <nav aria-label="Footer links">
+          <button type="button" onClick={() => navigate('learn')}>Learn</button>
+          <button type="button" onClick={() => navigate('build')}>Build</button>
+          <button type="button" onClick={() => navigate('practice')}>Practice</button>
+        </nav>
+        <span className="footer-note">Built for understanding formal languages, not hiding them.</span>
+      </footer>
     </>
   )
 }
