@@ -61,7 +61,7 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
     <section className="challenge-workspace">
       <div className="challenge-toolbar">
         <button onClick={onBack}>← Workspace</button>
-        <div><small>REPAIR LAB / LEVELS 1-7</small><strong>Debug the machine, then prove the repair.</strong></div>
+        <div><small>REPAIR LAB / LEVELS 1-7</small></div>
       </div>
 
       <div className="challenge-layout">
