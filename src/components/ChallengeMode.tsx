@@ -11,7 +11,7 @@ interface ChallengeModeProps {
   mode: AcceptanceMode
   activeChallengeId: string | null
   onSetActiveChallenge: (id: string | null) => void
-  onLoadMachine: (machine: PDA) => void
+  onLoadMachine: (machine: PDA, mode: AcceptanceMode) => void
   onOpenDesigner: () => void
   onBack: () => void
 }
@@ -24,8 +24,8 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
   const isActive = activeChallengeId === selected.id
   const challengeMode = selected.acceptanceMode
   const previewMachine = isActive ? machine : selected.brokenMachine
-  const publicResults = useMemo(() => runLanguageTests(machine, selected.publicTests, challengeMode), [machine, selected, challengeMode])
-  const hiddenResults = useMemo(() => runLanguageTests(machine, selected.hiddenTests, challengeMode), [machine, selected, challengeMode])
+  const publicResults = useMemo(() => isActive ? runLanguageTests(machine, selected.publicTests, challengeMode) : [], [isActive, machine, selected, challengeMode])
+  const hiddenResults = useMemo(() => isActive ? runLanguageTests(machine, selected.hiddenTests, challengeMode) : [], [isActive, machine, selected, challengeMode])
   const publicPassedCount = publicResults.filter((result) => result.passed).length
   const hiddenPassedCount = hiddenResults.filter((result) => result.passed).length
   const publicPassed = publicPassedCount === publicResults.length
@@ -41,7 +41,7 @@ export function ChallengeMode({ machine, mode, activeChallengeId, onSetActiveCha
       ...selected.brokenMachine,
       states: selected.brokenMachine.states.map((state) => ({ ...state })),
       transitions: selected.brokenMachine.transitions.map((transition) => ({ ...transition })),
-    })
+    }, challengeMode)
     setShowHint(false)
     setHintUsed(false)
   }

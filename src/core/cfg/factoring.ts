@@ -16,9 +16,14 @@ function commonPrefix(a: string, b: string) {
 
 export function findLeftFactoringOpportunities(grammar: Grammar): LeftFactoringOpportunity[] {
   const opportunities: LeftFactoringOpportunity[] = []
+  const grouped = new Map<string, string[]>()
 
   for (const production of grammar.productions) {
-    const alternatives = [...new Set(production.right.filter((alternative) => alternative !== EPSILON))]
+    grouped.set(production.left, [...(grouped.get(production.left) || []), ...production.right])
+  }
+
+  for (const [left, productionAlternatives] of grouped) {
+    const alternatives = [...new Set(productionAlternatives.filter((alternative) => alternative !== EPSILON))]
     const prefixes = new Set<string>()
     for (let i = 0; i < alternatives.length; i += 1) {
       for (let j = i + 1; j < alternatives.length; j += 1) {
@@ -32,7 +37,7 @@ export function findLeftFactoringOpportunities(grammar: Grammar): LeftFactoringO
       .filter((item) => item.alternatives.length >= 2)
       .sort((a, b) => b.prefix.length - a.prefix.length || b.alternatives.length - a.alternatives.length)
 
-    if (candidates[0]) opportunities.push({ left: production.left, ...candidates[0] })
+    if (candidates[0]) opportunities.push({ left, ...candidates[0] })
   }
 
   return opportunities
@@ -59,17 +64,22 @@ export function applyOneLeftFactoringStep(grammar: Grammar): Grammar {
   const used = new Set(grammar.nonTerminals)
   const fresh = freshNonTerminal(used)
   const productions: Production[] = []
+  const grouped = new Map<string, string[]>()
 
   for (const production of grammar.productions) {
-    if (production.left !== opportunity.left) {
-      productions.push({ left: production.left, right: [...production.right] })
+    grouped.set(production.left, [...(grouped.get(production.left) || []), ...production.right])
+  }
+
+  for (const [left, alternatives] of grouped) {
+    if (left !== opportunity.left) {
+      productions.push({ left, right: [...alternatives] })
       continue
     }
 
     const grouped = new Set(opportunity.alternatives)
-    const untouched = production.right.filter((alternative) => !grouped.has(alternative))
+    const untouched = alternatives.filter((alternative) => !grouped.has(alternative))
     productions.push({
-      left: production.left,
+      left,
       right: [...untouched, `${opportunity.prefix}${fresh}`],
     })
     productions.push({

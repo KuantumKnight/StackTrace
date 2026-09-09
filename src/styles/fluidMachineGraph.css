@@ -18,18 +18,6 @@
   touch-action: pan-y;
 }
 
-html[data-theme='glass'] .fluid-machine-viewport {
-  --fluid-edge-color: #74859a;
-  --fluid-active-edge: #3cc8bd;
-  --fluid-node-fill: #f8fbff;
-  --fluid-node-stroke: #5074dc;
-  --fluid-active-fill: #eaf1ff;
-  --fluid-accepting: #2baea5;
-  --fluid-halo: #3cc8bd;
-  --fluid-pulse: #9ffaf2;
-  --fluid-initial: #74859a;
-}
-
 html[data-theme='night'] .fluid-machine-viewport {
   --fluid-edge-color: #65758a;
   --fluid-active-edge: #53c9bd;

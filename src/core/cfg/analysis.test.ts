@@ -29,6 +29,13 @@ describe('CFG static analysis', () => {
     expect(analyzeGrammar(transformed).directLeftRecursive).toEqual([])
   })
 
+  it('combines repeated nonterminal declarations before transforming recursion', () => {
+    const grammar = parseGrammar('S -> Sa\nS -> b')
+    const transformed = removeDirectLeftRecursion(grammar)
+    expect(grammarToSource(transformed)).toBe('S -> bZ\nZ -> aZ | ε')
+    expect(analyzeGrammar(transformed).directLeftRecursive).toEqual([])
+  })
+
   it('reports undefined, unreachable, and non-generating symbols', () => {
     const grammar = parseGrammar('S -> aA | X\nA -> a\nB -> B')
     const diagnostics = grammarDiagnostics(grammar)
@@ -43,6 +50,13 @@ describe('CFG static analysis', () => {
     const transformed = leftFactorGrammar(grammar)
     expect(findLeftFactoringOpportunities(transformed)).toEqual([])
     expect(grammarToSource(transformed)).toContain('S ->')
+  })
+
+  it('finds common prefixes split across repeated nonterminal declarations', () => {
+    const grammar = parseGrammar('S -> aA\nS -> aB\nA -> x\nB -> y')
+    expect(findLeftFactoringOpportunities(grammar)[0]?.prefix).toBe('a')
+    const transformed = leftFactorGrammar(grammar)
+    expect(findLeftFactoringOpportunities(transformed)).toEqual([])
   })
 
   it('finds an ambiguity witness using leftmost derivations only', () => {

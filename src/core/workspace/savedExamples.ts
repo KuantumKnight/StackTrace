@@ -1,4 +1,4 @@
-import { makeSnapshot, type WorkspaceSnapshot, type WorkspaceStateInput } from './persistence'
+import { isWorkspaceSnapshot, makeSnapshot, type WorkspaceSnapshot, type WorkspaceStateInput } from './persistence'
 
 const STORAGE_KEY = 'stacktrace.saved-examples.v1'
 const MAX_SAVED = 24
@@ -18,11 +18,7 @@ function isSavedWorkspace(value: unknown): value is SavedWorkspace {
     && typeof item.name === 'string'
     && typeof item.createdAt === 'string'
     && typeof item.updatedAt === 'string'
-    && !!item.snapshot
-    && item.snapshot.version === 1
-    && typeof item.snapshot.grammar === 'string'
-    && typeof item.snapshot.input === 'string'
-    && !!item.snapshot.machine
+    && isWorkspaceSnapshot(item.snapshot)
 }
 
 function write(items: SavedWorkspace[]) {

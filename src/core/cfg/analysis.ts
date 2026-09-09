@@ -3,12 +3,6 @@ import type { Grammar, Production } from './grammarParser'
 const EPSILON = 'ε'
 const END = '$'
 
-export interface AmbiguityWitness {
-  value: string
-  derivations: string[][]
-  explored: number
-}
-
 export interface GrammarAnalysis {
   first: Record<string, string[]>
   follow: Record<string, string[]>
@@ -219,26 +213,31 @@ function rebuildGrammar(startSymbol: string, productions: Production[]): Grammar
 export function removeDirectLeftRecursion(grammar: Grammar): Grammar {
   const used = new Set(grammar.nonTerminals)
   const transformed: Production[] = []
+  const grouped = new Map<string, string[]>()
 
   for (const production of grammar.productions) {
-    const recursive = production.right.filter((alternative) => alternative !== EPSILON && alternative.startsWith(production.left))
+    grouped.set(production.left, [...(grouped.get(production.left) || []), ...production.right])
+  }
+
+  for (const [left, alternatives] of grouped) {
+    const recursive = alternatives.filter((alternative) => alternative !== EPSILON && alternative.startsWith(left))
     if (!recursive.length) {
-      transformed.push({ left: production.left, right: [...production.right] })
+      transformed.push({ left, right: [...alternatives] })
       continue
     }
 
-    const nonRecursive = production.right.filter((alternative) => !recursive.includes(alternative))
+    const nonRecursive = alternatives.filter((alternative) => !recursive.includes(alternative))
     const fresh = freshNonTerminal(used)
     used.add(fresh)
 
     const betas = nonRecursive.length ? nonRecursive : [EPSILON]
     transformed.push({
-      left: production.left,
+      left,
       right: betas.map((beta) => beta === EPSILON ? fresh : `${beta}${fresh}`),
     })
     transformed.push({
       left: fresh,
-      right: [...recursive.map((alpha) => `${alpha.slice(production.left.length)}${fresh}`), EPSILON],
+      right: [...recursive.map((alpha) => `${alpha.slice(left.length)}${fresh}`), EPSILON],
     })
   }
 
@@ -248,16 +247,21 @@ export function removeDirectLeftRecursion(grammar: Grammar): Grammar {
 export function leftFactorGrammar(grammar: Grammar): Grammar {
   const used = new Set(grammar.nonTerminals)
   const transformed: Production[] = []
+  const grouped = new Map<string, string[]>()
 
   for (const production of grammar.productions) {
-    const groups = factoringGroups(production.right)
+    grouped.set(production.left, [...(grouped.get(production.left) || []), ...production.right])
+  }
+
+  for (const [left, alternatives] of grouped) {
+    const groups = factoringGroups(alternatives)
     if (!groups.length) {
-      transformed.push({ left: production.left, right: [...production.right] })
+      transformed.push({ left, right: [...alternatives] })
       continue
     }
 
     const grouped = new Set(groups.flatMap((group) => group.alternatives))
-    const right = production.right.filter((alternative) => !grouped.has(alternative))
+    const right = alternatives.filter((alternative) => !grouped.has(alternative))
 
     for (const group of groups) {
       const fresh = freshNonTerminal(used)
@@ -269,50 +273,10 @@ export function leftFactorGrammar(grammar: Grammar): Grammar {
       })
     }
 
-    transformed.unshift({ left: production.left, right })
+    transformed.push({ left, right })
   }
 
   return rebuildGrammar(grammar.startSymbol, transformed)
-}
-
-export function findAmbiguityWitness(grammar: Grammar, maxTerminalLength = 6, maxDepth = 10, maxForms = 3000): AmbiguityWitness | null {
-  interface SearchNode { form: string; depth: number; path: string[] }
-  const queue: SearchNode[] = [{ form: grammar.startSymbol, depth: 0, path: [grammar.startSymbol] }]
-  const completed = new Map<string, string[][]>()
-  const seenCounts = new Map<string, number>()
-  let explored = 0
-
-  while (queue.length && explored < maxForms) {
-    const node = queue.shift()!
-    explored += 1
-    const terminalCount = [...node.form].filter((symbol) => !grammar.nonTerminals.includes(symbol)).length
-    if (terminalCount > maxTerminalLength || node.depth > maxDepth) continue
-
-    const index = [...node.form].findIndex((symbol) => grammar.nonTerminals.includes(symbol))
-    if (index < 0) {
-      if (node.form.length > maxTerminalLength) continue
-      const paths = completed.get(node.form) || []
-      if (!paths.some((path) => path.join('\u0001') === node.path.join('\u0001'))) paths.push(node.path)
-      completed.set(node.form, paths)
-      if (paths.length >= 2) return { value: node.form, derivations: paths.slice(0, 2), explored }
-      continue
-    }
-
-    const variable = node.form[index]
-    const production = grammar.productions.find((item) => item.left === variable)
-    if (!production) continue
-
-    for (const alternative of production.right) {
-      const replacement = alternative === EPSILON ? '' : alternative
-      const next = node.form.slice(0, index) + replacement + node.form.slice(index + 1)
-      const count = seenCounts.get(next) || 0
-      if (count >= 3) continue
-      seenCounts.set(next, count + 1)
-      queue.push({ form: next, depth: node.depth + 1, path: [...node.path, next || EPSILON] })
-    }
-  }
-
-  return null
 }
 
 export function grammarToSource(grammar: Grammar) {

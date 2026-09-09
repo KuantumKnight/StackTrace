@@ -101,7 +101,7 @@ function hasAcceptingContinuation(
   if (start.status !== 'active') return false
 
   const queue: Array<{ config: Configuration; depth: number }> = [{ config: start, depth: 0 }]
-  const visited = new Set([configurationKey(start)])
+  const visited = new Map([[configurationKey(start), 0]])
   let explored = 0
 
   while (queue.length && explored < maxNodes) {
@@ -115,9 +115,11 @@ function hasAcceptingContinuation(
       if (child.status !== 'active' || child.stack.length > 96) continue
 
       const key = configurationKey(child)
-      if (visited.has(key)) continue
-      visited.add(key)
-      queue.push({ config: child, depth: depth + 1 })
+      const childDepth = depth + 1
+      const previousDepth = visited.get(key)
+      if (previousDepth !== undefined && previousDepth <= childDepth) continue
+      visited.set(key, childDepth)
+      queue.push({ config: child, depth: childDepth })
     }
   }
 

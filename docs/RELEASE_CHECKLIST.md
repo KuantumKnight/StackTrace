@@ -71,7 +71,7 @@ Public deployment targets:
 After a successful static release, `StackTrace Live Smoke` retries both endpoints and requires the production page title:
 
 ```text
-StackTrace — CFG & PDA Debugger
+StackTrace — CFG & PDA Visual Debugger
 ```
 
 This catches deployment/DNS/hosting regressions independently of the production build itself.

@@ -37,7 +37,10 @@ export function buildExecutionTree(
 
   const nodes: ExecutionTreeNode[] = [root]
   const queue: ExecutionTreeNode[] = [root]
-  const visited = new Set([configurationKey(root.config)])
+  // A configuration reached earlier is only a safe merge when it was reached
+  // at the same or a shallower depth. A shallower path has more remaining
+  // depth budget, so a later, deeper visit cannot stand in for it.
+  const visited = new Map([[configurationKey(root.config), root.depth]])
   let counter = 1
   let truncated = false
 
@@ -57,12 +60,8 @@ export function buildExecutionTree(
 
     const children = allNextConfigurations(machine, node.config, mode, counter)
     for (const rawChild of children) {
-      if (nodes.length >= maxNodes) {
-        truncated = true
-        return { nodes, truncated }
-      }
-
       const id = `n${counter++}`
+      const childDepth = node.depth + 1
       let config: Configuration = {
         ...rawChild,
         id,
@@ -79,22 +78,31 @@ export function buildExecutionTree(
       }
 
       const key = configurationKey(config)
-      if (config.status === 'active' && visited.has(key)) {
+      const previousDepth = visited.get(key)
+      if (config.status === 'active' && previousDepth !== undefined && previousDepth <= childDepth) {
         config = {
           ...config,
-          status: 'limit',
-          reason: 'Repeated configuration stopped to prevent an infinite ε-loop.',
+          status: 'merged',
+          reason: 'Equivalent configuration already explored; this branch shares its future with another branch.',
         }
-        truncated = true
       } else if (config.status === 'active') {
-        visited.add(key)
+        visited.set(key, childDepth)
+      }
+
+      // A merged branch does not need to consume a node budget: its future is
+      // already represented by the earlier visit. This avoids reporting a
+      // false search limit when the final remaining branches are reconvergent.
+      if (nodes.length >= maxNodes) {
+        if (config.status === 'merged') continue
+        truncated = true
+        return { nodes, truncated }
       }
 
       const child: ExecutionTreeNode = {
         id,
         parentId: node.id,
         transitionId: config.transitionId,
-        depth: node.depth + 1,
+        depth: childDepth,
         config,
       }
       nodes.push(child)

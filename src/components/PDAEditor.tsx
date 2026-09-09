@@ -100,8 +100,12 @@ export function PDAEditor({ machine, onChange, onBack }: PDAEditorProps) {
     const svg = event.currentTarget.ownerSVGElement
     if (!svg) return
     const rect = svg.getBoundingClientRect()
-    let x = Math.min(WIDTH - 45, Math.max(45, ((event.clientX - rect.left) / rect.width) * WIDTH))
-    let y = Math.min(HEIGHT - 45, Math.max(55, ((event.clientY - rect.top) / rect.height) * HEIGHT))
+    const canvasX = ((event.clientX - rect.left) / rect.width) * WIDTH
+    const canvasY = ((event.clientY - rect.top) / rect.height) * HEIGHT
+    const xAtCanvasScale = WIDTH / 2 + (canvasX - WIDTH / 2) / zoom
+    const yAtCanvasScale = HEIGHT / 2 + (canvasY - HEIGHT / 2) / zoom
+    let x = Math.min(WIDTH - 45, Math.max(45, xAtCanvasScale))
+    let y = Math.min(HEIGHT - 45, Math.max(55, yAtCanvasScale))
     if (snapToGrid) {
       x = Math.round(x / GRID) * GRID
       y = Math.round(y / GRID) * GRID

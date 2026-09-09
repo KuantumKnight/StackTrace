@@ -26,7 +26,7 @@ jobs:
 
             for attempt in {1..18}; do
               echo "[$name] attempt $attempt: $url"
-              if body="$(curl -fsSL --max-time 15 "$url")" && grep -Fq 'StackTrace — CFG & PDA Debugger' <<< "$body"; then
+              if body="$(curl -fsSL --max-time 15 "$url")" && grep -Fq 'StackTrace — CFG & PDA Visual Debugger' <<< "$body"; then
                 echo "[$name] OK"
                 return 0
               fi

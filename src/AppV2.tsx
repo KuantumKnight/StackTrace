@@ -17,6 +17,8 @@ import { StackTimeline } from './components/StackTimeline'
 import { StackView } from './components/StackView'
 import { TestBench } from './components/TestBench'
 import { WorkspaceShare } from './components/WorkspaceShare'
+import { cfgToPda } from './core/cfg/cfgToPda'
+import { parseGrammar } from './core/cfg/grammarParser'
 import {
   appendHistoryEntry,
   canMoveBack,
@@ -52,6 +54,7 @@ function statusLabel(status: Configuration['status']) {
   if (status === 'accepted') return 'ACCEPTED'
   if (status === 'dead') return 'BRANCH DEAD'
   if (status === 'limit') return 'SEARCH LIMIT'
+  if (status === 'merged') return 'BRANCH MERGED'
   return 'READY'
 }
 
@@ -212,6 +215,14 @@ export default function AppV2() {
     replaceMachine(nextMachine)
   }
 
+  const buildPdaFromGrammar = () => {
+    try {
+      useGeneratedMachine(cfgToPda(parseGrammar(grammar)).machine)
+    } catch {
+      // CFGEditor disables this action while the grammar is invalid.
+    }
+  }
+
   const editMachine = (nextMachine: PDA) => {
     setMachine(nextMachine)
     reset(input, acceptanceMode, nextMachine)
@@ -228,9 +239,22 @@ export default function AppV2() {
     setView('designer')
   }
 
-  const loadChallengeMachine = (nextMachine: PDA) => {
+  useEffect(() => {
+    const onExperienceNavigate = (event: Event) => {
+      const destination = (event as CustomEvent<'debug' | 'learn' | 'build' | 'practice'>).detail
+      if (destination === 'debug') setView('workspace')
+      if (destination === 'learn') setView('learn')
+      if (destination === 'practice') setView('challenges')
+      if (destination === 'build') openDesigner('workspace')
+    }
+    window.addEventListener('stacktrace:navigate', onExperienceNavigate)
+    return () => window.removeEventListener('stacktrace:navigate', onExperienceNavigate)
+  }, [])
+
+  const loadChallengeMachine = (nextMachine: PDA, mode: AcceptanceMode) => {
     setMachine(nextMachine)
-    reset(input, acceptanceMode, nextMachine)
+    setAcceptanceMode(mode)
+    reset(input, mode, nextMachine)
   }
 
   const applyAnalyzedGrammar = (source: string) => {
@@ -271,6 +295,8 @@ export default function AppV2() {
       ? current.reason || 'This computation branch has no legal next move.'
       : current.status === 'limit'
         ? current.reason || 'Search stopped at the configured safety limit.'
+        : current.status === 'merged'
+          ? current.reason || 'This branch shares a previously explored configuration.'
         : `${availableTransitions.length} valid move${availableTransitions.length === 1 ? '' : 's'} from this configuration.`
 
   const runAvailable = current.status === 'active' || canMoveForward(debugHistory)
@@ -295,19 +321,19 @@ export default function AppV2() {
           <div className="nav-overflow" ref={navigationMenuRef}>
             <button ref={navigationTriggerRef} className="nav-overflow-trigger" aria-expanded={navigationOpen} aria-controls="secondary-navigation" onClick={() => setNavigationOpen((open) => !open)}>More</button>
             {navigationOpen && (
-              <div className="nav-menu" id="secondary-navigation" role="group" aria-label="More StackTrace tools">
-                <button aria-pressed={view === 'derivations'} className={view === 'derivations' ? 'active-tab' : ''} onClick={() => { setView('derivations'); setNavigationOpen(false) }}>Derivations</button>
-                <button aria-pressed={view === 'analysis'} className={view === 'analysis' ? 'active-tab' : ''} onClick={() => { setView('analysis'); setNavigationOpen(false) }}>CFG analysis</button>
-                <button aria-pressed={view === 'conversion'} className={view === 'conversion' ? 'active-tab' : ''} onClick={() => { setView('conversion'); setNavigationOpen(false) }}>CFG → PDA</button>
-                <button aria-pressed={view === 'tests'} className={view === 'tests' ? 'active-tab' : ''} onClick={() => { setView('tests'); setNavigationOpen(false) }}>Test bench</button>
-                <button aria-pressed={view === 'examples'} className={view === 'examples' ? 'active-tab' : ''} onClick={() => { setView('examples'); setNavigationOpen(false) }}>Examples</button>
-                <button onClick={() => {
+              <div className="nav-menu" id="secondary-navigation" role="menu" aria-label="More StackTrace tools">
+                <button role="menuitem" aria-pressed={view === 'derivations'} className={view === 'derivations' ? 'active-tab' : ''} onClick={() => { setView('derivations'); setNavigationOpen(false) }}>Derivations</button>
+                <button role="menuitem" aria-pressed={view === 'analysis'} className={view === 'analysis' ? 'active-tab' : ''} onClick={() => { setView('analysis'); setNavigationOpen(false) }}>CFG analysis</button>
+                <button role="menuitem" aria-pressed={view === 'conversion'} className={view === 'conversion' ? 'active-tab' : ''} onClick={() => { setView('conversion'); setNavigationOpen(false) }}>CFG → PDA</button>
+                <button role="menuitem" aria-pressed={view === 'tests'} className={view === 'tests' ? 'active-tab' : ''} onClick={() => { setView('tests'); setNavigationOpen(false) }}>Test bench</button>
+                <button role="menuitem" aria-pressed={view === 'examples'} className={view === 'examples' ? 'active-tab' : ''} onClick={() => { setView('examples'); setNavigationOpen(false) }}>Examples</button>
+                <button role="menuitem" onClick={() => {
                   setView('workspace')
                   setInspectorView('tree')
                   setNavigationOpen(false)
                   window.setTimeout(() => document.getElementById('workspace-inspector')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0)
                 }}>Execution tree</button>
-                <button aria-pressed={view === 'share'} className={view === 'share' ? 'active-tab' : ''} onClick={() => { setView('share'); setNavigationOpen(false) }}>Share workspace</button>
+                <button role="menuitem" aria-pressed={view === 'share'} className={view === 'share' ? 'active-tab' : ''} onClick={() => { setView('share'); setNavigationOpen(false) }}>Share workspace</button>
               </div>
             )}
           </div>
@@ -382,7 +408,7 @@ export default function AppV2() {
             <div className="workspace-stage">
               <aside className="setup-rail">
                 <div className="rail-intro"><span>01</span><div><small>LANGUAGE</small><strong>Define what should be recognized.</strong></div></div>
-                <CFGEditor value={grammar} onChange={setGrammar} />
+                <CFGEditor value={grammar} onChange={setGrammar} onBuild={buildPdaFromGrammar} />
 
                 <section className="panel input-setup-panel">
                   <div className="panel-heading"><div><span>INPUT</span><span className="heading-separator">/</span><span>ACCEPTANCE</span></div><span>TRY A STRING</span></div>
@@ -472,12 +498,12 @@ export default function AppV2() {
               <div className="inspector-heading">
                 <div><small>DEEP INSPECTION</small><strong>Open one lens at a time.</strong></div>
                 <div className="inspector-tabs" role="tablist" aria-label="Debugger inspection views">
-                  <button role="tab" aria-selected={inspectorView === 'trace'} className={inspectorView === 'trace' ? 'selected' : ''} onClick={() => setInspectorView('trace')}>Trace</button>
-                  <button role="tab" aria-selected={inspectorView === 'tree'} className={inspectorView === 'tree' ? 'selected' : ''} onClick={() => setInspectorView('tree')}>Execution tree</button>
-                  <button role="tab" aria-selected={inspectorView === 'timeline'} className={inspectorView === 'timeline' ? 'selected' : ''} onClick={() => setInspectorView('timeline')}>Stack depth</button>
+                  <button id="inspector-tab-trace" role="tab" aria-selected={inspectorView === 'trace'} aria-controls="inspector-panel" className={inspectorView === 'trace' ? 'selected' : ''} onClick={() => setInspectorView('trace')}>Trace</button>
+                  <button id="inspector-tab-tree" role="tab" aria-selected={inspectorView === 'tree'} aria-controls="inspector-panel" className={inspectorView === 'tree' ? 'selected' : ''} onClick={() => setInspectorView('tree')}>Execution tree</button>
+                  <button id="inspector-tab-timeline" role="tab" aria-selected={inspectorView === 'timeline'} aria-controls="inspector-panel" className={inspectorView === 'timeline' ? 'selected' : ''} onClick={() => setInspectorView('timeline')}>Stack depth</button>
                 </div>
               </div>
-              <div className="inspector-body">
+              <div id="inspector-panel" className="inspector-body" role="tabpanel" tabIndex={0} aria-labelledby={`inspector-tab-${inspectorView}`}>
                 {inspectorView === 'trace' ? (
                   <ExecutionTrace machine={machine} history={history} activeIndex={activeIndex} onSelect={selectHistory} />
                 ) : inspectorView === 'tree' ? (

@@ -1,5 +1,5 @@
 export type AcceptanceMode = 'final-state' | 'empty-stack'
-export type BranchStatus = 'active' | 'accepted' | 'dead' | 'limit'
+export type BranchStatus = 'active' | 'accepted' | 'dead' | 'limit' | 'merged'
 
 export interface PDAState {
   id: string

@@ -1,20 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUpIcon, CommandIcon, MoonIcon, SearchIcon, SunIcon } from './LucideIcons'
 
 type Theme = 'paper' | 'night'
 
-const commands = [
-  { id: 'debug', label: 'Open debugger', hint: 'D', action: () => document.querySelector<HTMLElement>('[aria-label="Open StackTrace debugger"]')?.click() },
-  { id: 'learn', label: 'Open Learn', hint: 'L', action: () => document.querySelector<HTMLElement>('nav button:nth-child(2)')?.click() },
-  { id: 'build', label: 'Open Build', hint: 'B', action: () => document.querySelector<HTMLElement>('nav button:nth-child(3)')?.click() },
-  { id: 'practice', label: 'Open Practice', hint: 'P', action: () => document.querySelector<HTMLElement>('nav button:nth-child(4)')?.click() },
-  { id: 'top', label: 'Back to top', hint: '↑', action: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
-]
+type ExperienceDestination = 'debug' | 'learn' | 'build' | 'practice'
 
 function readTheme(): Theme {
-  const saved = window.localStorage.getItem('stacktrace-theme') as Theme | null
+  if (typeof window === 'undefined') return 'paper'
+  let saved: string | null = null
+  try {
+    saved = window.localStorage.getItem('stacktrace-theme')
+  } catch {
+    // Theme preference is optional; fall back to the system preference.
+  }
   if (saved === 'paper' || saved === 'night') return saved
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'paper'
+  return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ? 'night' : 'paper'
 }
 
 export function ExperienceLayer() {
@@ -24,6 +24,18 @@ export function ExperienceLayer() {
   const [scrollProgress, setScrollProgress] = useState(0)
   const [showTop, setShowTop] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const paletteInputRef = useRef<HTMLInputElement>(null)
+  const lastFocusedElementRef = useRef<HTMLElement | null>(null)
+  const navigate = (destination: ExperienceDestination) => {
+    window.dispatchEvent(new CustomEvent<ExperienceDestination>('stacktrace:navigate', { detail: destination }))
+  }
+  const commands = useMemo(() => [
+    { id: 'debug', label: 'Open debugger', hint: 'D', action: () => navigate('debug') },
+    { id: 'learn', label: 'Open Learn', hint: 'L', action: () => navigate('learn') },
+    { id: 'build', label: 'Open Build', hint: 'B', action: () => navigate('build') },
+    { id: 'practice', label: 'Open Practice', hint: 'P', action: () => navigate('practice') },
+    { id: 'top', label: 'Back to top', hint: '↑', action: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
+  ], [])
 
   const filteredCommands = useMemo(() => {
     const normalized = query.trim().toLowerCase()
@@ -32,7 +44,11 @@ export function ExperienceLayer() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
-    window.localStorage.setItem('stacktrace-theme', theme)
+    try {
+      window.localStorage.setItem('stacktrace-theme', theme)
+    } catch {
+      // Theme persistence is best-effort and must not block the app.
+    }
   }, [theme])
 
   useEffect(() => {
@@ -56,16 +72,49 @@ export function ExperienceLayer() {
   }, [])
 
   useEffect(() => {
+    if (paletteOpen) {
+      paletteInputRef.current?.focus()
+      const onPaletteKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          event.preventDefault()
+          setPaletteOpen(false)
+          return
+        }
+        if (event.key !== 'Tab') return
+        const dialog = event.currentTarget instanceof Window
+          ? document.querySelector<HTMLElement>('[aria-label="Command palette"]')
+          : null
+        const focusable = dialog ? Array.from(dialog.querySelectorAll<HTMLElement>('button, input, [tabindex]:not([tabindex="-1"])')) : []
+        if (!focusable.length) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault()
+          last.focus()
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault()
+          first.focus()
+        }
+      }
+      window.addEventListener('keydown', onPaletteKeyDown)
+      return () => window.removeEventListener('keydown', onPaletteKeyDown)
+    }
+    lastFocusedElementRef.current?.focus()
+    lastFocusedElementRef.current = null
+  }, [paletteOpen])
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
+        if (!paletteOpen) lastFocusedElementRef.current = document.activeElement as HTMLElement | null
         setPaletteOpen((value) => !value)
       }
       if (event.key === 'Escape') setPaletteOpen(false)
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
+  }, [paletteOpen])
 
   const cycleTheme = () => {
     const next = theme === 'night' ? 'paper' : 'night'
@@ -74,6 +123,10 @@ export function ExperienceLayer() {
   }
 
   const themeIcon = theme === 'night' ? <MoonIcon /> : <SunIcon />
+  const openPalette = () => {
+    lastFocusedElementRef.current = document.activeElement as HTMLElement | null
+    setPaletteOpen(true)
+  }
 
   return (
     <>
@@ -83,7 +136,7 @@ export function ExperienceLayer() {
         <button className="icon-button theme-button" type="button" onClick={cycleTheme} aria-label={`Theme: ${theme === 'night' ? 'Night' : 'Paper'}. Change theme`} title={`Theme: ${theme === 'night' ? 'Night' : 'Paper'}`}>
           {themeIcon}
         </button>
-        <button className="command-button" type="button" onClick={() => setPaletteOpen(true)} aria-label="Open command palette">
+        <button className="command-button" type="button" onClick={openPalette} aria-label="Open command palette">
           <SearchIcon /><span>Search</span><kbd><CommandIcon />K</kbd>
         </button>
       </div>
@@ -97,7 +150,7 @@ export function ExperienceLayer() {
           <section className="command-palette" role="dialog" aria-modal="true" aria-label="Command palette">
             <div className="command-search">
               <SearchIcon />
-              <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Jump to a StackTrace tool…" aria-label="Search commands" />
+              <input ref={paletteInputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Jump to a StackTrace tool…" aria-label="Search commands" />
               <kbd>ESC</kbd>
             </div>
             <div className="command-list">
@@ -119,9 +172,9 @@ export function ExperienceLayer() {
           <span>CFG + PDA visual debugger</span>
         </div>
         <nav aria-label="Footer links">
-          <button type="button" onClick={() => document.querySelector<HTMLElement>('nav button:nth-child(2)')?.click()}>Learn</button>
-          <button type="button" onClick={() => document.querySelector<HTMLElement>('nav button:nth-child(3)')?.click()}>Build</button>
-          <button type="button" onClick={() => document.querySelector<HTMLElement>('nav button:nth-child(4)')?.click()}>Practice</button>
+          <button type="button" onClick={() => navigate('learn')}>Learn</button>
+          <button type="button" onClick={() => navigate('build')}>Build</button>
+          <button type="button" onClick={() => navigate('practice')}>Practice</button>
         </nav>
         <span className="footer-note">Built for understanding formal languages, not hiding them.</span>
       </footer>

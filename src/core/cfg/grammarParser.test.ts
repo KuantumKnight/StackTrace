@@ -28,4 +28,11 @@ describe('CFG parser and derivation search', () => {
     expect(result.status).toBe('found')
     expect(result.forms.at(-1)).toBe('aabb')
   })
+
+  it('does not discard valid derivations with temporarily long sentential forms', () => {
+    const grammar = parseGrammar('S -> A\nA -> BBBBBBBB\nB -> a | ε')
+    const result = deriveTarget(grammar, 'a', 'leftmost')
+    expect(result.status).toBe('found')
+    expect(result.forms.at(-1)).toBe('a')
+  })
 })

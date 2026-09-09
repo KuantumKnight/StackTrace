@@ -16,8 +16,32 @@ describe('NPDA execution tree safety', () => {
 
     const result = buildExecutionTree(machine, '', 'final-state', 20, 100)
     expect(result.nodes.length).toBe(2)
-    expect(result.nodes[1].config.status).toBe('limit')
-    expect(result.nodes[1].config.reason).toMatch(/Repeated configuration/)
+    expect(result.nodes[1].config.status).toBe('merged')
+    expect(result.nodes[1].config.reason).toMatch(/Equivalent configuration/)
+  })
+
+  it('merges reconverging branches without turning complete rejection into a limit', () => {
+    const machine: PDA = {
+      startState: 'q0',
+      initialStackSymbol: 'Z',
+      states: [
+        { id: 'q0', name: 'q0', initial: true, x: 100, y: 100 },
+        { id: 'qDead', name: 'qDead', x: 300, y: 100 },
+      ],
+      transitions: [
+        { id: 'branch-a', from: 'q0', to: 'qDead', input: 'ε', stackTop: 'ε', replacement: 'ε' },
+        { id: 'branch-b', from: 'q0', to: 'qDead', input: 'ε', stackTop: 'ε', replacement: 'ε' },
+      ],
+    }
+
+    const result = buildExecutionTree(machine, '', 'final-state', 10, 50)
+    expect(result.truncated).toBe(false)
+    expect(result.nodes.some((node) => node.config.status === 'merged')).toBe(true)
+    expect(result.nodes.some((node) => node.config.status === 'dead')).toBe(true)
+
+    const [testResult] = runLanguageTests(machine, [{ id: 'reject-empty', expectation: 'reject', input: '', sourceLine: 1 }], 'final-state')
+    expect(testResult.outcome).toBe('rejected')
+    expect(testResult.passed).toBe(true)
   })
 
   it('accepts by empty stack independently of final-state markings', () => {

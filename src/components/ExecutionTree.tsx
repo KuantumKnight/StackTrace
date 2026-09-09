@@ -133,7 +133,12 @@ export function ExecutionTree({ machine, input, mode, onSelectPath }: ExecutionT
               onClick={() => selectNode(node.id)}
               role="button"
               tabIndex={0}
-              onKeyDown={(event) => (event.key === 'Enter' || event.key === ' ') && selectNode(node.id)}
+              aria-label={`${node.id.toUpperCase()}, state ${node.state}, ${node.status}`}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return
+                event.preventDefault()
+                selectNode(node.id)
+              }}
             >
               <circle r="17" />
               <text className="tree-state" textAnchor="middle" y="3">{node.state.replace('qAccept', 'qA')}</text>

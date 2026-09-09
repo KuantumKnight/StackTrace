@@ -315,6 +315,8 @@ html[data-theme='night'] button:focus-visible, html[data-theme='night'] input:fo
 .status-badge.dead .status-light { background: var(--danger); }
 .status-badge.limit { color: var(--warning); border-color: var(--warning-line); background: var(--warning-soft); }
 .status-badge.limit .status-light { background: var(--warning); }
+.status-badge.merged { color: var(--accent); border-color: var(--accent-line); background: var(--accent-soft); }
+.status-badge.merged .status-light { background: var(--accent); }
 
 .workspace-hero {
   position: relative;
@@ -589,10 +591,10 @@ html[data-theme='night'] button:focus-visible, html[data-theme='night'] input:fo
 .trace-list b { color: var(--accent); }.trace-state { color: var(--ink); }.trace-mono { color: var(--ink-2); }.trace-operation { color: var(--muted); }
 .trace-list i { border-color: var(--line-strong); color: var(--muted); }.trace-list i.accepted { color: var(--success); border-color: var(--success-line); }.trace-list i.dead { color: var(--danger); border-color: var(--danger-line); }
 .execution-tree-scroller { background: var(--machine-canvas-bg); }
-.tree-edge { stroke: #a6a9b0; }.tree-edge.accepted { stroke: rgba(36,116,81,.7); }.tree-edge.dead { stroke: rgba(173,61,77,.58); }.tree-edge.limit { stroke: rgba(142,100,30,.6); }
+.tree-edge { stroke: #a6a9b0; }.tree-edge.accepted { stroke: rgba(36,116,81,.7); }.tree-edge.dead { stroke: rgba(173,61,77,.58); }.tree-edge.limit { stroke: rgba(142,100,30,.6); }.tree-edge.merged { stroke: var(--accent); stroke-dasharray: 4 4; }
 html[data-theme='night'] .tree-edge { stroke: #4d5a6a; }
 .tree-node circle { fill: var(--surface); stroke: #858b97; }.tree-node.selected circle { fill: var(--accent-soft); stroke: var(--accent); }.tree-node.accepted circle { fill: var(--success-soft); stroke: var(--success); }.tree-node.dead circle { fill: var(--danger-soft); stroke: var(--danger); }.tree-node.limit circle { fill: var(--warning-soft); stroke: var(--warning); }
-.tree-state { fill: var(--ink); }.tree-node-id { fill: var(--muted); }.tree-node.accepted .tree-state { fill: var(--success); }.tree-node.dead .tree-state { fill: var(--danger); }.tree-node.limit .tree-state { fill: var(--warning); }
+.tree-node.merged circle { fill: var(--accent-soft); stroke: var(--accent); stroke-dasharray: 4 3; }.tree-state { fill: var(--ink); }.tree-node-id { fill: var(--muted); }.tree-node.accepted .tree-state { fill: var(--success); }.tree-node.dead .tree-state { fill: var(--danger); }.tree-node.limit .tree-state { fill: var(--warning); }.tree-node.merged .tree-state { fill: var(--accent); }
 .tree-inspector { border-top-color: var(--line); background: var(--surface-2); }.tree-inspector > span { border-right-color: var(--line); }.tree-inspector small { color: var(--muted); }.tree-inspector b { color: var(--ink-2); }
 
 .derivation-workspace, .analysis-workspace, .conversion-workspace, .designer-workspace, .testbench-workspace, .challenge-workspace, .examples-workspace, .learn-workspace, .share-workspace {

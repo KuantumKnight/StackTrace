@@ -1,12 +1,10 @@
 import { useMemo } from 'react'
-import { cfgToPda } from '../core/cfg/cfgToPda'
 import { parseGrammar } from '../core/cfg/grammarParser'
-import { loadWorkspace, saveWorkspace } from '../core/workspace/persistence'
 
 interface CFGEditorProps {
   value: string
   onChange: (next: string) => void
-  onBuild?: () => void
+  onBuild: () => void
 }
 
 export function CFGEditor({ value, onChange, onBuild }: CFGEditorProps) {
@@ -16,27 +14,7 @@ export function CFGEditor({ value, onChange, onBuild }: CFGEditorProps) {
   }, [value])
 
   const buildPda = () => {
-    if (onBuild) {
-      onBuild()
-      return
-    }
-    if (!result.grammar) return
-
-    const current = loadWorkspace()
-    const testInput = document.querySelector<HTMLInputElement>('.test-string-field input')?.value ?? current?.input ?? ''
-    const machine = cfgToPda(result.grammar).machine
-
-    saveWorkspace({
-      grammar: value,
-      input: testInput,
-      acceptanceMode: 'final-state',
-      machine,
-      activeChallengeId: null,
-    })
-
-    const url = new URL(window.location.href)
-    url.searchParams.delete('w')
-    window.location.replace(url.toString())
+    onBuild()
   }
 
   return (

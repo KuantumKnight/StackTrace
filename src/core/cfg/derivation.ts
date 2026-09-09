@@ -78,7 +78,6 @@ export function deriveTarget(
     for (const alternative of production.right) {
       const replacement = alternative === 'ε' ? '' : alternative
       const after = `${node.form.slice(0, index)}${replacement}${node.form.slice(index + 1)}`
-      if (after.length > target.length + 6) continue
       if (!isCompatible(after, target, grammar)) continue
 
       const step: DerivationStep = {
